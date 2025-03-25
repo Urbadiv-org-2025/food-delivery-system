@@ -1,0 +1,9 @@
+
+kafka:
+  image: confluentinc/cp-kafka:latest
+  ports:
+    - "9092:9092"
+zookeeper:
+  image: confluentinc/cp-zookeeper:latest
+  ports:
+    - "2181:2181"
