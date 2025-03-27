@@ -14,6 +14,10 @@ connectDB();
 // Routes
 app.use('/api', userRoutes);
 
+app.get('/', (req, res) => {
+    res.send('User Service is running');
+}   );
+
 // Start the server
 app.listen(PORT, () => {
     console.log(`User Service is listening on port ${PORT}`);
