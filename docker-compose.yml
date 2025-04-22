@@ -93,12 +93,12 @@ services:
     depends_on:
       - kafka
 
-  frontend:
-    build: ./frontend
-    ports:
-      - "3001:3000"
-    depends_on:
-      - api-gateway
+#  frontend:
+#    build: ./frontend
+#    ports:
+#      - "3001:3000"
+#    depends_on:
+#      - api-gateway
 
 volumes:
   mongodb_data:
