@@ -103,13 +103,13 @@ router.put('/restaurants/:id/availability', authenticate, restrictTo('restaurant
 router.post('/orders', authenticate, restrictTo('customer'), async (req, res) => {
     try {
         await producer.connect();
-        const orderData = { ...req.body, customerId: req.user.id, id: Date.now().toString(), status: 'pending' };
+        const orderData = { ...req.body, customerId: req.user.id, id: Date.now().toString(), status: 'pending', email: req.user.email };
         await producer.send({
             topic: 'order-events',
             messages: [{ value: JSON.stringify({ action: 'create', data: orderData }) }],
         });
         await producer.disconnect();
-        res.status(201).json({ message: 'Order creation request sent' });
+        res.status(201).json({ message: 'Order creation request sent', orderId: orderData.id });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -118,7 +118,7 @@ router.post('/orders', authenticate, restrictTo('customer'), async (req, res) =>
 router.put('/orders/:id', authenticate, restrictTo('customer'), async (req, res) => {
     try {
         await producer.connect();
-        const orderData = { ...req.body, id: req.params.id, customerId: req.user.id };
+        const orderData = { ...req.body, id: req.params.id, customerId: req.user.id, email: req.user.email };
         await producer.send({
             topic: 'order-events',
             messages: [{ value: JSON.stringify({ action: 'update', data: orderData }) }],
@@ -130,10 +130,110 @@ router.put('/orders/:id', authenticate, restrictTo('customer'), async (req, res)
     }
 });
 
-router.get('/orders/:id', authenticate, restrictTo('customer'), async (req, res) => {
+router.delete('/orders/:id', authenticate, restrictTo('customer'), async (req, res) => {
+    try {
+        await producer.connect();
+        const orderData = { id: req.params.id, customerId: req.user.id, email: req.user.email };
+        await producer.send({
+            topic: 'order-events',
+            messages: [{ value: JSON.stringify({ action: 'cancel', data: orderData }) }],
+        });
+        await producer.disconnect();
+        res.json({ message: 'Order cancellation request sent' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/orders/:id/confirm', authenticate, restrictTo('customer'), async (req, res) => {
+    try {
+        const { paymentId, restaurantId } = req.body;
+        if (!paymentId) {
+            return res.status(400).json({ error: 'Payment ID required' });
+        }
+        await producer.connect();
+        const orderData = { id: req.params.id, paymentId, restaurantId, orderId: req.params.id };
+        // Trigger payment confirmation
+        await producer.send({
+            topic: 'payment-events',
+            messages: [{ value: JSON.stringify({ action: 'confirm', data: { paymentId, orderId: req.params.id } }) }],
+        });
+        // Trigger order confirmation
+        await producer.send({
+            topic: 'order-events',
+            messages: [{ value: JSON.stringify({ action: 'confirm', data: orderData }) }],
+        });
+        await producer.disconnect();
+        res.json({ message: 'Order and payment confirmation request sent' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/orders/:id', authenticate, restrictTo('customer', 'restaurant_admin', 'delivery_personnel'), async (req, res) => {
     try {
         const response = await axios.get(`http://order-management-service:3003/api/orders/${req.params.id}`);
         res.json(response.data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/orders/:id/prepare', authenticate, restrictTo('restaurant_admin'), async (req, res) => {
+    try {
+        await producer.connect();
+        const orderData = { id: req.params.id, restaurantId: req.user.id, email: req.body.customerEmail };
+        await producer.send({
+            topic: 'order-events',
+            messages: [{ value: JSON.stringify({ action: 'prepare', data: orderData }) }],
+        });
+        await producer.disconnect();
+        res.json({ message: 'Order preparation request sent' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/orders/:id/ready', authenticate, restrictTo('restaurant_admin'), async (req, res) => {
+    try {
+        await producer.connect();
+        const orderData = { id: req.params.id, restaurantId: req.user.id };
+        await producer.send({
+            topic: 'order-events',
+            messages: [{ value: JSON.stringify({ action: 'ready', data: orderData }) }],
+        });
+        await producer.disconnect();
+        res.json({ message: 'Order ready request sent' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/orders/:id/cancel', authenticate, restrictTo('restaurant_admin'), async (req, res) => {
+    try {
+        await producer.connect();
+        const orderData = { id: req.params.id, restaurantId: req.user.id, email: req.body.customerEmail };
+        await producer.send({
+            topic: 'order-events',
+            messages: [{ value: JSON.stringify({ action: 'cancel', data: orderData }) }],
+        });
+        await producer.disconnect();
+        res.json({ message: 'Order cancellation request sent' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/orders/:id/deliver', authenticate, restrictTo('delivery_personnel'), async (req, res) => {
+    try {
+        await producer.connect();
+        const orderData = { id: req.params.id, email: req.body.customerEmail };
+        await producer.send({
+            topic: 'order-events',
+            messages: [{ value: JSON.stringify({ action: 'deliver', data: orderData }) }],
+        });
+        await producer.disconnect();
+        res.json({ message: 'Order delivery request sent' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -166,16 +266,20 @@ router.get('/deliveries/:id', authenticate, restrictTo('customer', 'delivery_per
 router.post('/payments', authenticate, restrictTo('customer'), async (req, res) => {
     try {
         const response = await axios.post('http://payment-service:3005/api/payments', req.body);
-        await producer.connect();
-        await producer.send({
-            topic: 'payment-events',
-            messages: [{ value: JSON.stringify({ action: 'confirm', data: { orderId: req.body.orderId, paymentId: response.data.paymentId } }) }],
-        });
-        await producer.disconnect();
         res.json(response.data);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
+
+router.post('/refunds', authenticate, restrictTo('restaurant_admin', 'admin'), async (req, res) => {
+    try {
+        const response = await axios.post('http://payment-service:3005/api/refunds', req.body);
+        res.json(response.data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 module.exports = router;
