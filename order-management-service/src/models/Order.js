@@ -12,6 +12,19 @@ const orderSchema = new mongoose.Schema({
     },
     total: Number,
     paymentId: String,
+    location: {
+        type: {
+            type: String,
+            enum: ['Point'],
+            default: 'Point'
+        },
+        coordinates: {
+            type: [Number], // [longitude, latitude]
+            required: true
+        }
+    }
 });
+
+orderSchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('Order', orderSchema);

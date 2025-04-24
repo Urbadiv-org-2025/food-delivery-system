@@ -24,6 +24,10 @@ const runConsumer = async () => {
                     items: data.items,
                     status: 'pending',
                     total: data.items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+                    location: {
+                        type: 'Point',
+                        coordinates: [data.longitude, data.latitude]
+                    }
                 });
                 await order.save();
                 console.log(`Order created: ${data.id}`);
