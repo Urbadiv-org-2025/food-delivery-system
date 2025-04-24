@@ -15,83 +15,87 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     ports:
       - "9092:9092"
+      - "29092:29092"
 
-  mongodb:
-    image: mongo:latest
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
+  # mongodb:
+  #   image: mongo:latest
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongodb_data:/data/db
 
-  api-gateway:
-    build: ./api-gateway
-    ports:
-      - "3000:3000"
-    environment:
-      - KAFKA_BROKER=kafka:9092
-      - JWT_SECRET=your_jwt_secret
-    depends_on:
-      - kafka
-      - mongodb
+  # api-gateway:
+  #   build: ./api-gateway
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - KAFKA_BROKER=kafka:9092
+  #     - JWT_SECRET=your_jwt_secret
+  #   depends_on:
+  #     - kafka
+  #     - mongodb
 
-  user-management-service:
-    build: ./user-management-service
-    environment:
-      - KAFKA_BROKER=kafka:9092
-      - MONGO_URI=mongodb://mongodb:27017/user_db
-    depends_on:
-      - kafka
-      - mongodb
+  # user-management-service:
+  #   build: ./user-management-service
+  #   environment:
+  #     - KAFKA_BROKER=kafka:9092
+  #     - MONGO_URI=mongodb://mongodb:27017/user_db
+  #   depends_on:
+  #     - kafka
+  #     - mongodb
 
-  restaurant-management-service:
-    build: ./restaurant-management-service
-    environment:
-      - KAFKA_BROKER=kafka:9092
-      - MONGO_URI=mongodb://mongodb:27017/restaurant_db
-    depends_on:
-      - kafka
-      - mongodb
+  # restaurant-management-service:
+  #   build: ./restaurant-management-service
+  #   environment:
+  #     - KAFKA_BROKER=kafka:9092
+  #     - MONGO_URI=mongodb://mongodb:27017/restaurant_db
+  #   depends_on:
+  #     - kafka
+  #     - mongodb
 
-  order-management-service:
-    build: ./order-management-service
-    environment:
-      - KAFKA_BROKER=kafka:9092
-      - MONGO_URI=mongodb://mongodb:27017/order_db
-    depends_on:
-      - kafka
-      - mongodb
+  # order-management-service:
+  #   build: ./order-management-service
+  #   environment:
+  #     - KAFKA_BROKER=kafka:9092
+  #     - MONGO_URI=mongodb://mongodb:27017/order_db
+  #   depends_on:
+  #     - kafka
+  #     - mongodb
 
-  delivery-management-service:
-    build: ./delivery-management-service
-    environment:
-      - KAFKA_BROKER=kafka:9092
-      - MONGO_URI=mongodb://mongodb:27017/delivery_db
-    depends_on:
-      - kafka
-      - mongodb
+  # delivery-management-service:
+  #   build: ./delivery-management-service
+  #   environment:
+  #     - KAFKA_BROKER=kafka:9092
+  #     - MONGO_URI=mongodb://mongodb:27017/delivery_db
+  #   depends_on:
+  #     - kafka
+  #     - mongodb
 
-  payment-service:
-    build: ./payment-service
-    environment:
-      - KAFKA_BROKER=kafka:9092
-      - STRIPE_SECRET_KEY=your_stripe_secret_key
-    depends_on:
-      - kafka
+  # payment-service:
+  #   build: ./payment-service
+  #   environment:
+  #     - KAFKA_BROKER=kafka:9092
+  #     - STRIPE_SECRET_KEY=your_stripe_secret_key
+  #   depends_on:
+  #     - kafka
 
-  notification-service:
-    build: ./notification-service
-    environment:
-      - KAFKA_BROKER=kafka:9092
-      - TWILIO_ACCOUNT_SID=your_twilio_account_sid
-      - TWILIO_AUTH_TOKEN=your_twilio_auth_token
-      - TWILIO_PHONE_NUMBER=your_twilio_phone_number
-      - SENDGRID_API_KEY=your_sendgrid_api_key
-    depends_on:
-      - kafka
+  # notification-service:
+  #   build: ./notification-service
+  #   environment:
+  #     - KAFKA_BROKER=kafka:9092
+  #     - TWILIO_ACCOUNT_SID=your_twilio_account_sid
+  #     - TWILIO_AUTH_TOKEN=your_twilio_auth_token
+  #     - TWILIO_PHONE_NUMBER=your_twilio_phone_number
+  #     - SENDGRID_API_KEY=your_sendgrid_api_key
+  #   depends_on:
+  #     - kafka
 
 #  frontend:
 #    build: ./frontend
@@ -100,5 +104,5 @@ services:
 #    depends_on:
 #      - api-gateway
 
-volumes:
-  mongodb_data:
+# volumes:
+#   mongodb_data:
