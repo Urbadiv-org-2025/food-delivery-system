@@ -117,4 +117,22 @@ const getOrder = async (req, res) => {
     res.json(order);
 };
 
-module.exports = { runConsumer, getOrder };
+const getOrdersByCustomer = async (req, res) => {
+    try {
+        const { customerId, status } = req.query; 
+        const query = { customerId };
+        if (status) {
+            if (!['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'canceled'].includes(status)) {
+                return res.status(400).json({ error: 'Invalid status value' });
+            }
+            query.status = status;
+        }
+        const orders = await Order.find(query);
+        res.json(orders);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
+module.exports = { runConsumer, getOrder, getOrdersByCustomer };

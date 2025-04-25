@@ -239,6 +239,18 @@ router.post('/orders/:id/deliver', authenticate, restrictTo('delivery_personnel'
     }
 });
 
+router.get('/orders', authenticate, restrictTo('customer'), async (req, res) => {
+    try {
+        const { status } = req.query;
+        const response = await axios.get('http://localhost:3003/api/orders', {
+            params: { customerId: req.user.id, status }
+        });
+        res.json(response.data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.post('/deliveries', authenticate, restrictTo('customer'), async (req, res) => {
     try {
         await producer.connect();
