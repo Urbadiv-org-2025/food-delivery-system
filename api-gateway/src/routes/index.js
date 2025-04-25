@@ -24,7 +24,7 @@ router.post('/users/register', async (req, res) => {
 
 router.post('/users/login', async (req, res) => {
     try {
-        const response = await axios.post('http://user-management-service:3001/api/login', req.body);
+        const response = await axios.post('http://localhost:3001/api/login', req.body);
         res.json(response.data);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -33,7 +33,7 @@ router.post('/users/login', async (req, res) => {
 
 router.get('/users/:id', authenticate, restrictTo('admin'), async (req, res) => {
     try {
-        const response = await axios.get(`http://user-management-service:3001/api/users/${req.params.id}`);
+        const response = await axios.get(`http://localhost:3001/api/users/${req.params.id}`);
         res.json(response.data);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -172,7 +172,7 @@ router.post('/orders/:id/confirm', authenticate, restrictTo('customer'), async (
 
 router.get('/orders/:id', authenticate, restrictTo('customer', 'restaurant_admin', 'delivery_personnel'), async (req, res) => {
     try {
-        const response = await axios.get(`http://order-management-service:3003/api/orders/${req.params.id}`);
+        const response = await axios.get(`http://localhost:3003/api/orders/${req.params.id}`);
         res.json(response.data);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -256,7 +256,7 @@ router.post('/deliveries', authenticate, restrictTo('customer'), async (req, res
 
 router.get('/deliveries/:id', authenticate, restrictTo('customer', 'delivery_personnel'), async (req, res) => {
     try {
-        const response = await axios.get(`http://delivery-management-service:3004/api/deliveries/${req.params.id}`);
+        const response = await axios.get(`http://localhost:3004/api/deliveries/${req.params.id}`);
         res.json(response.data);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -265,7 +265,8 @@ router.get('/deliveries/:id', authenticate, restrictTo('customer', 'delivery_per
 
 router.post('/payments', authenticate, restrictTo('customer'), async (req, res) => {
     try {
-        const response = await axios.post('http://payment-service:3005/api/payments', req.body);
+        console.log(req.body);
+        const response = await axios.post('http://localhost:3005/api/payments', req.body);
         res.json(response.data);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -274,7 +275,7 @@ router.post('/payments', authenticate, restrictTo('customer'), async (req, res) 
 
 router.post('/refunds', authenticate, restrictTo('restaurant_admin', 'admin'), async (req, res) => {
     try {
-        const response = await axios.post('http://payment-service:3005/api/refunds', req.body);
+        const response = await axios.post('http://localhost:3005/api/refunds', req.body);
         res.json(response.data);
     } catch (err) {
         res.status(500).json({ error: err.message });

@@ -17,6 +17,7 @@ const runConsumer = async () => {
         eachMessage: async ({ message }) => {
             const { action, data } = JSON.parse(message.value);
             if (action === 'create') {
+                console.log(data);
                 const order = new Order({
                     id: data.id,
                     customerId: data.customerId,
