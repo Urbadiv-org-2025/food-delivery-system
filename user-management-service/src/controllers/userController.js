@@ -46,4 +46,12 @@ const getUser = async (req, res) => {
   res.json(user);
 };
 
-module.exports = { runConsumer, login, getUser };
+const deleteUser = async (req, res) => {
+  const { id } = req.params;
+  const user = await User.findOneAndDelete({ id });
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json({ message: 'User deleted successfully' });
+};
+
+
+module.exports = { runConsumer, login, getUser, deleteUser };
