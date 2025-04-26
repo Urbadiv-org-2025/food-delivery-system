@@ -1,6 +1,8 @@
 const express = require('express');
 const routes = require('./routes');
 const { runConsumer } = require('./controllers/deliveryController');
+const dotenv = require('dotenv');
+dotenv.config();
 
 const app = express();
 
