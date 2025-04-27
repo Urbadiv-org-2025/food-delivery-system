@@ -3,7 +3,7 @@ const axios = require("axios");
 const kafka = require("../config/kafka");
 const authenticate = require("../middleware/auth");
 const restrictTo = require("../middleware/restrict");
-const upload = require("../middleware/upload"); // Added for file upload
+const { restaurantUpload, menuUpload } = require("../middleware/upload");
 
 const router = express.Router();
 const producer = kafka.producer();
@@ -57,14 +57,32 @@ router.post(
   "/menu",
   authenticate,
   restrictTo("restaurant_admin"),
+  menuUpload.single("image"),
   async (req, res) => {
     try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Image file is required!" });
+      }
+
       await producer.connect();
       const menuData = {
         ...req.body,
         restaurantId: req.user.id,
         id: Date.now().toString(),
+        image: `/uploads/menu-items/${req.file.filename}`,
       };
+
+      // Add validation logging
+      console.log("Creating menu item with data:", menuData);
+
+      // Ensure all required fields are present
+      if (!menuData.name || !menuData.price || !menuData.category) {
+        return res.status(400).json({
+          error:
+            "Missing required fields: name, price, and category are required",
+        });
+      }
+
       await producer.send({
         topic: "menu-events",
         messages: [
@@ -72,8 +90,12 @@ router.post(
         ],
       });
       await producer.disconnect();
-      res.status(201).json({ message: "Menu item creation request sent" });
+      res.status(201).json({
+        message: "Menu item creation request sent",
+        data: menuData, // Send back the data for verification
+      });
     } catch (err) {
+      console.error("Error in menu post route:", err);
       res.status(500).json({ error: err.message });
     }
   }
@@ -83,14 +105,20 @@ router.put(
   "/menu/:id",
   authenticate,
   restrictTo("restaurant_admin"),
+  menuUpload.single("image"),
   async (req, res) => {
     try {
-      await producer.connect();
       const menuData = {
         ...req.body,
         id: req.params.id,
         restaurantId: req.user.id,
       };
+
+      if (req.file) {
+        menuData.image = `/uploads/menu-items/${req.file.filename}`;
+      }
+
+      await producer.connect();
       await producer.send({
         topic: "menu-events",
         messages: [
@@ -126,6 +154,39 @@ router.delete(
     }
   }
 );
+
+router.get("/menu/:id", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `http://localhost:3002/api/menu/${req.params.id}`
+    );
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/restaurants/:restaurantId/menu", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `http://localhost:3002/api/restaurants/${req.params.restaurantId}/menu`
+    );
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/restaurants/:restaurantId/menu/available", async (req, res) => {
+  try {
+    const response = await axios.get(
+      `http://localhost:3002/api/restaurants/${req.params.restaurantId}/menu/available`
+    );
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 router.put(
   "/restaurants/:id/availability",
@@ -491,13 +552,11 @@ router.post(
   }
 );
 
-// Add these new routes for restaurants
-
 router.post(
   "/restaurants",
   authenticate,
   restrictTo("admin", "restaurant_admin"),
-  upload.single("image"),
+  restaurantUpload.single("image"),
   async (req, res) => {
     try {
       if (!req.file) {
@@ -529,7 +588,7 @@ router.put(
   "/restaurants/:id",
   authenticate,
   restrictTo("admin", "restaurant_admin"),
-  upload.single("image"),
+  restaurantUpload.single("image"),
   async (req, res) => {
     try {
       const updateData = { ...req.body };

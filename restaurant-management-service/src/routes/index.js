@@ -9,4 +9,15 @@ router.get(
   restaurantController.getAvailableRestaurants
 );
 
+// Menu routes
+router.get("/menu/:id", restaurantController.getMenuItemById);
+router.get(
+  "/restaurants/:restaurantId/menu",
+  restaurantController.getRestaurantMenu
+);
+router.get(
+  "/restaurants/:restaurantId/menu/available",
+  restaurantController.getAvailableRestaurantMenu
+);
+
 module.exports = router;

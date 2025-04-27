@@ -16,32 +16,95 @@ const runConsumer = async () => {
 
   await consumer.run({
     eachMessage: async ({ topic, message }) => {
-      const { action, data } = JSON.parse(message.value);
+      // Parse the message only once
+      const parsedMessage = JSON.parse(message.value);
+      const { action, data: rawData } = parsedMessage;
 
       if (topic === "menu-events") {
-        if (action === "create") {
-          const menuItem = new MenuItem({
-            id: data.id,
-            restaurantId: data.restaurantId,
-            name: data.name,
-            price: data.price,
-            description: data.description,
-          });
-          await menuItem.save();
-          console.log(`Menu item created: ${data.name}`);
-        } else if (action === "update") {
-          await MenuItem.updateOne(
-            { id: data.id },
-            {
-              name: data.name,
-              price: data.price,
-              description: data.description,
-            }
+        try {
+          // Parse the message only once
+          const menuData =
+            typeof rawData === "string" ? JSON.parse(rawData) : rawData;
+
+          console.log(
+            "Received message:",
+            JSON.stringify(parsedMessage, null, 2)
           );
-          console.log(`Menu item updated: ${data.id}`);
-        } else if (action === "delete") {
-          await MenuItem.deleteOne({ id: data.id });
-          console.log(`Menu item deleted: ${data.id}`);
+          console.log("Processed data:", JSON.stringify(menuData, null, 2));
+
+          switch (action) {
+            case "create":
+              // Parse ingredients if it's a string
+              if (typeof menuData.ingredients === "string") {
+                try {
+                  menuData.ingredients = JSON.parse(menuData.ingredients);
+                } catch (err) {
+                  console.error(
+                    "Error parsing ingredients array:",
+                    err.message
+                  );
+                  menuData.ingredients = [];
+                }
+              }
+
+              const menuItem = new MenuItem({
+                id: menuData.id,
+                restaurantId: String(menuData.restaurantId),
+                name: menuData.name || "Unnamed Item",
+                price: menuData.price || 0,
+                description: menuData.description || "",
+                image: menuData.image || "",
+                available:
+                  menuData.available !== undefined ? menuData.available : true,
+                category: menuData.category || "main-course", // Set a default category
+                ingredients: menuData.ingredients || [],
+                dietaryRestrictions: menuData.dietaryRestrictions || [],
+              });
+
+              // Add validation logging
+              console.log("Creating menu item:", menuItem);
+
+              await menuItem.save();
+              console.log(`Menu item created: ${menuItem.name}`);
+              break;
+
+            case "update":
+              if (typeof menuData.ingredients === "string") {
+                try {
+                  menuData.ingredients = JSON.parse(menuData.ingredients);
+                } catch (err) {
+                  console.error(
+                    "Error parsing ingredients array:",
+                    err.message
+                  );
+                  menuData.ingredients = [];
+                }
+              }
+              await MenuItem.findOneAndUpdate(
+                { id: menuData.id },
+                {
+                  name: menuData.name,
+                  price: menuData.price,
+                  description: menuData.description,
+                  image: menuData.image,
+                  available: menuData.available,
+                  category: menuData.category,
+                  ingredients: menuData.ingredients,
+                  dietaryRestrictions: menuData.dietaryRestrictions,
+                },
+                { new: true }
+              );
+              console.log(`Menu item updated: ${menuData.id}`);
+              break;
+
+            case "delete":
+              await MenuItem.findOneAndDelete({ id: menuData.id });
+              console.log(`Menu item deleted: ${menuData.id}`);
+              break;
+          }
+        } catch (error) {
+          console.error(`Error processing menu event: ${error.message}`);
+          console.error(error.stack);
         }
       } else if (topic === "restaurant-events") {
         try {
@@ -130,9 +193,47 @@ const getAvailableRestaurants = async (req, res) => {
   }
 };
 
+const getMenuItemById = async (req, res) => {
+  try {
+    const menuItem = await MenuItem.findOne({ id: req.params.id });
+    if (!menuItem) {
+      return res.status(404).json({ error: "Menu item not found" });
+    }
+    res.status(200).json({ data: menuItem });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getRestaurantMenu = async (req, res) => {
+  try {
+    const menuItems = await MenuItem.find({
+      restaurantId: req.params.restaurantId,
+    });
+    res.status(200).json({ data: menuItems });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getAvailableRestaurantMenu = async (req, res) => {
+  try {
+    const menuItems = await MenuItem.find({
+      restaurantId: req.params.restaurantId,
+      available: true,
+    });
+    res.status(200).json({ data: menuItems });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   runConsumer,
   getRestaurantById,
   getAllRestaurants,
   getAvailableRestaurants,
+  getMenuItemById,
+  getRestaurantMenu,
+  getAvailableRestaurantMenu,
 };
