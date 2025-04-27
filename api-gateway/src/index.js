@@ -2,7 +2,6 @@ const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const path = require("path");
-const { handleUploadError } = require("./middleware/upload");
 
 dotenv.config();
 const routes = require("./routes");
@@ -10,9 +9,6 @@ const routes = require("./routes");
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// Add error handling middleware for file uploads
-app.use(handleUploadError);
 
 // Serve static images from uploads directory
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));

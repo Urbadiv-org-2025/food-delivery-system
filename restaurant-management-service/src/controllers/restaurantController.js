@@ -47,10 +47,16 @@ const runConsumer = async () => {
         try {
           switch (action) {
             case "create":
+              const restaurantLocation = {
+                address: data["location.address"],
+                latitude: parseFloat(data["location.latitude"]),
+                longitude: parseFloat(data["location.longitude"]),
+              };
+
               const restaurant = new Restaurant({
                 id: data.id,
                 name: data.name,
-                location: data.location,
+                location: restaurantLocation,
                 cuisine: data.cuisine,
                 rating: data.rating,
                 reviews: data.reviews,
