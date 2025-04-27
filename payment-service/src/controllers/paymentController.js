@@ -11,6 +11,7 @@ const consumer = kafka.consumer({ groupId: 'payment-group' });
 const createPayment = async (req, res) => {
     try {
         const { amount, currency, orderId } = req.body;
+        console.log(req.body);
         const paymentIntent = await stripe.paymentIntents.create({
             amount: amount * 100, // Stripe expects amount in cents
             currency: currency || 'usd',

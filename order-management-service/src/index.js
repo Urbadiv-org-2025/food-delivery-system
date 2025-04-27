@@ -1,4 +1,6 @@
 const express = require('express');
+const dotenv = require('dotenv');
+dotenv.config();
 const routes = require('./routes');
 const { runConsumer } = require('./controllers/orderController');
 

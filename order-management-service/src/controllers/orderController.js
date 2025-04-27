@@ -17,6 +17,7 @@ const runConsumer = async () => {
         eachMessage: async ({ message }) => {
             const { action, data } = JSON.parse(message.value);
             if (action === 'create') {
+                console.log(data);
                 const order = new Order({
                     id: data.id,
                     customerId: data.customerId,
@@ -24,6 +25,10 @@ const runConsumer = async () => {
                     items: data.items,
                     status: 'pending',
                     total: data.items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+                    location: {
+                        type: 'Point',
+                        coordinates: [data.longitude, data.latitude]
+                    }
                 });
                 await order.save();
                 console.log(`Order created: ${data.id}`);
@@ -112,4 +117,22 @@ const getOrder = async (req, res) => {
     res.json(order);
 };
 
-module.exports = { runConsumer, getOrder };
+const getOrdersByCustomer = async (req, res) => {
+    try {
+        const { customerId, status } = req.query; 
+        const query = { customerId };
+        if (status) {
+            if (!['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'canceled'].includes(status)) {
+                return res.status(400).json({ error: 'Invalid status value' });
+            }
+            query.status = status;
+        }
+        const orders = await Order.find(query);
+        res.json(orders);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
+module.exports = { runConsumer, getOrder, getOrdersByCustomer };
