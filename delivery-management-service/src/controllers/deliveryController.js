@@ -54,4 +54,16 @@ const getDelivery = async (req, res) => {
     res.json(delivery);
 };
 
-module.exports = { runConsumer, getDelivery };
+const getDriverDelivery = async (req, res) => {
+    const delivery = await Delivery.find({ driverId: req.params.driverId });
+    if (!delivery) return res.status(404).json({ error: 'Delivery not found' });
+    res.json(delivery);
+};
+
+const getDriverCurrentDelivery = async (req, res) => {
+    const delivery = await Delivery.findOne({ driverId: req.params.driverId , status: 'assigned' });
+    if (!delivery) return res.status(404).json({ error: 'Delivery not found' });
+    res.json(delivery);
+};
+
+module.exports = { runConsumer, getDelivery, getDriverDelivery, getDriverCurrentDelivery };
