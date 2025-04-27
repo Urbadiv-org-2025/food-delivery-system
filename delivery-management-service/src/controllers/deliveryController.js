@@ -24,6 +24,14 @@ const runConsumer = async () => {
                     orderId: data.orderId,
                     driverId: driver.id,
                     status: 'assigned',
+                    startLocation: {
+                        longitude: data.startLocation.longitude,
+                        latitude: data.startLocation.latitude,
+                    },
+                    endLocation: {
+                        longitude: data.endLocation.longitude,
+                        latitude: data.endLocation.latitude,
+                    }
                 });
                 await delivery.save();
                 console.log(`Delivery assigned: ${data.id}`);
