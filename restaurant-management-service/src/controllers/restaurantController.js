@@ -108,52 +108,82 @@ const runConsumer = async () => {
         }
       } else if (topic === "restaurant-events") {
         try {
+          // Parse the message only once
+          const restaurantData =
+            typeof rawData === "string" ? JSON.parse(rawData) : rawData;
+
+          console.log(
+            "Received restaurant event:",
+            JSON.stringify(parsedMessage, null, 2)
+          );
+          console.log(
+            "Processed restaurant data:",
+            JSON.stringify(restaurantData, null, 2)
+          );
+
           switch (action) {
             case "create":
               const restaurantLocation = {
-                address: data["location.address"],
-                latitude: parseFloat(data["location.latitude"]),
-                longitude: parseFloat(data["location.longitude"]),
+                address:
+                  restaurantData.location?.address ||
+                  restaurantData["location.address"],
+                latitude: parseFloat(
+                  restaurantData.location?.latitude ||
+                    restaurantData["location.latitude"]
+                ),
+                longitude: parseFloat(
+                  restaurantData.location?.longitude ||
+                    restaurantData["location.longitude"]
+                ),
               };
 
               const restaurant = new Restaurant({
-                id: data.id,
-                name: data.name,
+                id: restaurantData.id,
+                name: restaurantData.name,
                 location: restaurantLocation,
-                cuisine: data.cuisine,
-                rating: data.rating,
-                reviews: data.reviews,
-                openingHours: data.openingHours,
-                image: data.image,
+                cuisine: restaurantData.cuisine,
+                rating: restaurantData.rating || 0,
+                reviews: restaurantData.reviews || 0,
+                openingHours: restaurantData.openingHours,
+                image: restaurantData.image,
+                available:
+                  restaurantData.available !== undefined
+                    ? restaurantData.available
+                    : true,
               });
+
+              console.log("Creating restaurant:", restaurant);
               await restaurant.save();
-              console.log(`Restaurant created: ${data.name}`);
+              console.log(`Restaurant created: ${restaurantData.name}`);
               break;
 
             case "update":
               const updatedRestaurant = await Restaurant.findOneAndUpdate(
-                { id: data.id },
-                data.updateData,
+                { id: restaurantData.id },
+                restaurantData.updateData,
                 { new: true }
               );
-              console.log(`Restaurant updated: ${data.id}`);
+              console.log(`Restaurant updated: ${restaurantData.id}`);
               break;
 
             case "delete":
-              await Restaurant.findOneAndDelete({ id: data.id });
-              console.log(`Restaurant deleted: ${data.id}`);
+              await Restaurant.findOneAndDelete({ id: restaurantData.id });
+              console.log(`Restaurant deleted: ${restaurantData.id}`);
               break;
 
             case "update_availability":
               await Restaurant.updateOne(
-                { id: data.id },
-                { available: data.available }
+                { id: restaurantData.id },
+                { available: restaurantData.available }
               );
-              console.log(`Restaurant availability updated: ${data.id}`);
+              console.log(
+                `Restaurant availability updated: ${restaurantData.id}`
+              );
               break;
           }
         } catch (error) {
           console.error(`Error processing restaurant event: ${error.message}`);
+          console.error(error.stack);
         }
       }
     },

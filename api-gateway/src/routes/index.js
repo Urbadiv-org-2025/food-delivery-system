@@ -83,6 +83,34 @@ router.post(
         });
       }
 
+      // Add price validation
+      if (isNaN(menuData.price) || menuData.price <= 0) {
+        return res.status(400).json({
+          error: "Price must be a positive number",
+        });
+      }
+
+      // Add ingredients validation
+      if (
+        !Array.isArray(menuData.ingredients) ||
+        menuData.ingredients.length === 0
+      ) {
+        return res.status(400).json({
+          error: "At least one ingredient is required",
+        });
+      }
+
+      // Validate dietary restrictions
+      const validRestrictions = ["vegetarian", "vegan", "Non-Veg", "nut-free"];
+      if (
+        menuData.dietaryRestrictions &&
+        !validRestrictions.includes(menuData.dietaryRestrictions)
+      ) {
+        return res.status(400).json({
+          error: "Invalid dietary restriction value",
+        });
+      }
+
       await producer.send({
         topic: "menu-events",
         messages: [
@@ -92,7 +120,7 @@ router.post(
       await producer.disconnect();
       res.status(201).json({
         message: "Menu item creation request sent",
-        data: menuData, // Send back the data for verification
+        data: menuData,
       });
     } catch (err) {
       console.error("Error in menu post route:", err);
@@ -563,12 +591,39 @@ router.post(
         return res.status(400).json({ error: "Image file is required!" });
       }
 
+      // Validate required fields
+      const requiredFields = [
+        "name",
+        "location.address",
+        "location.latitude",
+        "location.longitude",
+        "cuisine",
+        "openingHours",
+      ];
+      const missingFields = requiredFields.filter((field) => {
+        if (field.includes(".")) {
+          const [parent, child] = field.split(".");
+          return !req.body[parent] || !req.body[parent][child];
+        }
+        return !req.body[field];
+      });
+
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          error: `Missing required fields: ${missingFields.join(", ")}`,
+        });
+      }
+
       await producer.connect();
       const restaurantData = {
         ...req.body,
         id: Date.now().toString(),
         image: `/uploads/restaurants/${req.file.filename}`,
+        available: true,
       };
+
+      // Log the data being sent
+      console.log("Creating restaurant with data:", restaurantData);
 
       await producer.send({
         topic: "restaurant-events",
@@ -577,8 +632,12 @@ router.post(
         ],
       });
       await producer.disconnect();
-      res.status(201).json({ message: "Restaurant creation request sent" });
+      res.status(201).json({
+        message: "Restaurant creation request sent",
+        data: restaurantData,
+      });
     } catch (err) {
+      console.error("Error creating restaurant:", err);
       res.status(500).json({ error: err.message });
     }
   }
