@@ -16,7 +16,7 @@ const menuSchema = new mongoose.Schema({
   ingredients: { type: [String], required: true },
   dietaryRestrictions: {
     type: [String],
-    enum: ["vegetarian", "vegan", "gluten-free", "nut-free"],
+    enum: ["vegetarian", "vegan", "Non-Veg", "nut-free"],
     default: [],
   },
 });
