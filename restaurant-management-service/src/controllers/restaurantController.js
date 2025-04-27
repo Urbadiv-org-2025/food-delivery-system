@@ -2,22 +2,22 @@ const kafka = require("../config/kafka");
 const MenuItem = require("../models/MenuItem");
 const Restaurant = require("../models/Restaurant");
 const connectDB = require("../config/db");
-const path = require("path");
 
 connectDB();
 
 const consumer = kafka.consumer({ groupId: "restaurant-group" });
 
-// Existing Kafka Consumer - keep this!
 const runConsumer = async () => {
   await consumer.connect();
   await consumer.subscribe({
     topics: ["menu-events", "restaurant-events"],
     fromBeginning: true,
   });
+
   await consumer.run({
     eachMessage: async ({ topic, message }) => {
       const { action, data } = JSON.parse(message.value);
+
       if (topic === "menu-events") {
         if (action === "create") {
           const menuItem = new MenuItem({
@@ -44,121 +44,53 @@ const runConsumer = async () => {
           console.log(`Menu item deleted: ${data.id}`);
         }
       } else if (topic === "restaurant-events") {
-        if (action === "update_availability") {
-          await Restaurant.updateOne(
-            { id: data.id },
-            { available: data.available }
-          );
-          console.log(`Restaurant availability updated: ${data.id}`);
+        try {
+          switch (action) {
+            case "create":
+              const restaurant = new Restaurant({
+                id: data.id,
+                name: data.name,
+                location: data.location,
+                cuisine: data.cuisine,
+                rating: data.rating,
+                reviews: data.reviews,
+                openingHours: data.openingHours,
+                image: data.image,
+              });
+              await restaurant.save();
+              console.log(`Restaurant created: ${data.name}`);
+              break;
+
+            case "update":
+              const updatedRestaurant = await Restaurant.findOneAndUpdate(
+                { id: data.id },
+                data.updateData,
+                { new: true }
+              );
+              console.log(`Restaurant updated: ${data.id}`);
+              break;
+
+            case "delete":
+              await Restaurant.findOneAndDelete({ id: data.id });
+              console.log(`Restaurant deleted: ${data.id}`);
+              break;
+
+            case "update_availability":
+              await Restaurant.updateOne(
+                { id: data.id },
+                { available: data.available }
+              );
+              console.log(`Restaurant availability updated: ${data.id}`);
+              break;
+          }
+        } catch (error) {
+          console.error(`Error processing restaurant event: ${error.message}`);
         }
       }
     },
   });
 };
 
-// ✅ Role Checker Function
-const checkRole = (roles, userRole) => {
-  return roles.includes(userRole);
-};
-
-// ✅ Create Restaurant (Admin & Restaurant Admin Only)
-const createRestaurant = async (req, res) => {
-  try {
-    if (!checkRole(["admin", "restaurant_admin"], req.user.role)) {
-      return res.status(403).json({ error: "Unauthorized" });
-    }
-
-    const { id, name, location, cuisine, rating, reviews, openingHours } =
-      req.body;
-    if (!req.file) {
-      return res.status(400).json({ error: "Image file is required!" });
-    }
-
-    const imagePath = `/uploads/restaurants/${req.file.filename}`;
-
-    const restaurant = new Restaurant({
-      id,
-      name,
-      location: JSON.parse(location),
-      cuisine,
-      rating,
-      reviews,
-      openingHours,
-      image: imagePath,
-    });
-
-    const savedRestaurant = await restaurant.save();
-    res
-      .status(201)
-      .json({
-        message: "Restaurant created successfully",
-        data: savedRestaurant,
-      });
-  } catch (error) {
-    console.error("Error creating restaurant:", error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// ✅ Update Restaurant (Admin & Restaurant Admin Only)
-const updateRestaurant = async (req, res) => {
-  try {
-    if (!checkRole(["admin", "restaurant_admin"], req.user.role)) {
-      return res.status(403).json({ error: "Unauthorized" });
-    }
-
-    const { id } = req.params;
-    const {
-      name,
-      location,
-      cuisine,
-      rating,
-      reviews,
-      openingHours,
-      available,
-    } = req.body;
-    const updateData = {
-      name,
-      location: location ? JSON.parse(location) : undefined,
-      cuisine,
-      rating,
-      reviews,
-      openingHours,
-      available,
-    };
-
-    // Add image if file exists
-    if (req.file) {
-      updateData.image = `/uploads/restaurants/${req.file.filename}`;
-    }
-
-    // Remove undefined fields
-    Object.keys(updateData).forEach(
-      (key) => updateData[key] === undefined && delete updateData[key]
-    );
-
-    const updatedRestaurant = await Restaurant.findOneAndUpdate(
-      { id },
-      updateData,
-      { new: true }
-    );
-    if (!updatedRestaurant) {
-      return res.status(404).json({ error: "Restaurant not found" });
-    }
-
-    res
-      .status(200)
-      .json({
-        message: "Restaurant updated successfully",
-        data: updatedRestaurant,
-      });
-  } catch (error) {
-    console.error("Error updating restaurant:", error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
-// ✅ Get Restaurant by ID (Public)
 const getRestaurantById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -173,7 +105,6 @@ const getRestaurantById = async (req, res) => {
   }
 };
 
-// ✅ Get All Restaurants (Public)
 const getAllRestaurants = async (req, res) => {
   try {
     const restaurants = await Restaurant.find();
@@ -184,37 +115,8 @@ const getAllRestaurants = async (req, res) => {
   }
 };
 
-// ✅ Delete Restaurant (Admin & Restaurant Admin Only)
-const deleteRestaurant = async (req, res) => {
-  try {
-    if (!checkRole(["admin", "restaurant_admin"], req.user.role)) {
-      return res.status(403).json({ error: "Unauthorized" });
-    }
-
-    const { id } = req.params;
-    const deletedRestaurant = await Restaurant.findOneAndDelete({ id });
-
-    if (!deletedRestaurant) {
-      return res.status(404).json({ error: "Restaurant not found" });
-    }
-
-    res
-      .status(200)
-      .json({
-        message: "Restaurant deleted successfully",
-        data: deletedRestaurant,
-      });
-  } catch (error) {
-    console.error("Error deleting restaurant:", error);
-    res.status(500).json({ error: error.message });
-  }
-};
-
 module.exports = {
-  runConsumer, // Keep your consumer!
-  createRestaurant,
-  updateRestaurant,
+  runConsumer,
   getRestaurantById,
   getAllRestaurants,
-  deleteRestaurant,
 };
