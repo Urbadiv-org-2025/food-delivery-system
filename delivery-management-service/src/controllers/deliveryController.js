@@ -15,6 +15,7 @@ const runConsumer = async () => {
         eachMessage: async ({ message }) => {
             const { action, data } = JSON.parse(message.value);
             if (action === 'assign') {
+                console.log(`Assigning delivery: ${data.id}`);
                 // Simple driver assignment logic (random available driver)
                 const drivers = await User.find({ role: 'delivery_personnel' });
                 const driver = drivers[Math.floor(Math.random() * drivers.length)];
@@ -32,6 +33,16 @@ const runConsumer = async () => {
                     messages: [{ value: JSON.stringify({ action: 'notify_driver', data: { driverId: driver.id, orderId: data.orderId, message: 'New delivery assigned' } }) }],
                 });
                 await producer.disconnect();
+            } else if (action === 'update_status') {
+                console.log(`Updating delivery status: ${data.id}`);
+                const delivery = await Delivery.findOne({ id: data.id });
+                if (!delivery) {
+                    console.error(`Delivery not found: ${data.id}`);
+                    return;
+                }
+                delivery.status = data.status;
+                await delivery.save();
+                console.log(`Delivery status updated: ${data.id} to ${data.status}`);
             }
         },
     });
