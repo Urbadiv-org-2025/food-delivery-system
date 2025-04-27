@@ -121,8 +121,18 @@ const getAllRestaurants = async (req, res) => {
   }
 };
 
+const getAvailableRestaurants = async (req, res) => {
+  try {
+    const restaurants = await Restaurant.find({ available: true });
+    res.json(restaurants);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching available restaurants" });
+  }
+};
+
 module.exports = {
   runConsumer,
   getRestaurantById,
   getAllRestaurants,
+  getAvailableRestaurants,
 };

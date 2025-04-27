@@ -586,6 +586,18 @@ router.delete(
   }
 );
 
+// Add this new route for getting available restaurants
+router.get("/restaurants/available", async (req, res) => {
+  try {
+    const response = await axios.get(
+      "http://localhost:3002/api/restaurants/available"
+    );
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Keep the existing routes for getting restaurants
 router.get("/restaurants/:id", async (req, res) => {
   try {
