@@ -620,22 +620,53 @@ router.post(
         return res.status(400).json({ error: "Image file is required!" });
       }
 
-      // Validate required fields
-      const requiredFields = [
-        "name",
-        "location.address",
-        "location.latitude",
-        "location.longitude",
-        "cuisine",
-        "openingHours",
-      ];
-      const missingFields = requiredFields.filter((field) => {
-        if (field.includes(".")) {
-          const [parent, child] = field.split(".");
-          return !req.body[parent] || !req.body[parent][child];
+      console.log("Request body:", req.body); // Debug log
+
+      // Handle both nested and flat location data structures
+      let location = {};
+
+      // Check for nested location object
+      if (req.body.location && typeof req.body.location === "string") {
+        try {
+          location = JSON.parse(req.body.location);
+        } catch (err) {
+          console.error("Error parsing location:", err);
         }
-        return !req.body[field];
-      });
+      } else if (req.body.location && typeof req.body.location === "object") {
+        location = req.body.location;
+      } else {
+        // Try flat structure
+        location = {
+          address: req.body["location.address"],
+          latitude: req.body["location.latitude"],
+          longitude: req.body["location.longitude"],
+        };
+      }
+
+      // Ensure location values are properly formatted
+      const formattedLocation = {
+        address: location.address || "",
+        latitude: parseFloat(location.latitude) || 0,
+        longitude: parseFloat(location.longitude) || 0,
+      };
+
+      // Validate location data
+      if (
+        !formattedLocation.address ||
+        !formattedLocation.latitude ||
+        !formattedLocation.longitude
+      ) {
+        console.log("Invalid location data:", formattedLocation); // Debug log
+        return res.status(400).json({
+          error:
+            "Missing required location fields: address, latitude, and longitude",
+          receivedData: formattedLocation,
+        });
+      }
+
+      // Validate other required fields
+      const requiredFields = ["name", "cuisine", "openingHours"];
+      const missingFields = requiredFields.filter((field) => !req.body[field]);
 
       if (missingFields.length > 0) {
         return res.status(400).json({
@@ -643,17 +674,23 @@ router.post(
         });
       }
 
-      await producer.connect();
       const restaurantData = {
         ...req.body,
         id: Date.now().toString(),
         restaurantAdminId: req.user.id,
         image: `/uploads/restaurants/${req.file.filename}`,
         available: true,
+        location: formattedLocation,
       };
 
-      console.log("Creating restaurant with data:", restaurantData);
+      // Remove any flat location fields if they exist
+      delete restaurantData["location.address"];
+      delete restaurantData["location.latitude"];
+      delete restaurantData["location.longitude"];
 
+      console.log("Final restaurant data:", restaurantData); // Debug log
+
+      await producer.connect();
       await producer.send({
         topic: "restaurant-events",
         messages: [
@@ -661,6 +698,7 @@ router.post(
         ],
       });
       await producer.disconnect();
+
       res.status(201).json({
         message: "Restaurant creation request sent",
         data: restaurantData,

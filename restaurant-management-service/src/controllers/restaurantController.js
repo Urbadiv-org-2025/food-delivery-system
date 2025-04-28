@@ -177,8 +177,8 @@ const runConsumer = async () => {
               try {
                 console.log("Update restaurant data received:", restaurantData);
 
-                // Extract the correct ID from the message
-                const restaurantId = restaurantData.data.id;
+                // Extract the correct ID directly from restaurantData
+                const restaurantId = restaurantData.id;
                 console.log("Restaurant ID:", restaurantId);
 
                 // Find the restaurant first
@@ -193,8 +193,8 @@ const runConsumer = async () => {
                   break;
                 }
 
-                // Extract update data
-                const { updateData } = restaurantData.data;
+                // Extract update data directly from restaurantData
+                const { updateData } = restaurantData;
                 console.log("Update data:", updateData);
 
                 // Create update object with schema validation
@@ -207,10 +207,10 @@ const runConsumer = async () => {
                       updateData.location.address ||
                       restaurantToUpdate.location.address,
                     latitude:
-                      Number(updateData.location.latitude) ||
+                      Number(updateData.location.latitude?.trim()) ||
                       restaurantToUpdate.location.latitude,
                     longitude:
-                      Number(updateData.location.longitude) ||
+                      Number(updateData.location.longitude?.trim()) ||
                       restaurantToUpdate.location.longitude,
                   };
                 }
@@ -220,7 +220,6 @@ const runConsumer = async () => {
                   "name",
                   "cuisine",
                   "openingHours",
-                  "available",
                   "rating",
                   "reviews",
                   "image",
@@ -231,6 +230,11 @@ const runConsumer = async () => {
                     updateObject[field] = updateData[field];
                   }
                 });
+
+                // Handle boolean available field separately
+                if (updateData.available !== undefined) {
+                  updateObject.available = updateData.available === "true";
+                }
 
                 console.log("Final update object:", updateObject);
 

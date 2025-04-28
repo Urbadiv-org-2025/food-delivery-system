@@ -19,7 +19,7 @@ const RestaurantDetails = () => {
   // ✅ Fetch Restaurant Details
   const fetchRestaurant = async () => {
     try {
-      const res = await axios.get(`http://localhost:3002/api/restaurant/${id}`);
+      const res = await axios.get(`http://localhost:3002/api/restaurants/${id}`);
       setRestaurant(res.data.data || null);
     } catch (error) {
       console.error("Error fetching restaurant:", error);
@@ -53,14 +53,32 @@ const RestaurantDetails = () => {
   // ✅ Delete Restaurant
   const handleDeleteRestaurant = async () => {
     if (!window.confirm("Are you sure you want to delete this restaurant?")) return;
+    
     try {
-      await axios.delete(`http://localhost:3000/api/restaurants/${id}`);
-      toast({ title: "Restaurant deleted successfully" });
-      navigate("/dashboard"); // Redirect after delete
+      const token = localStorage.getItem("token");
+      
+      if (!token) {
+        toast({
+          title: "Error",
+          description: "You must be logged in to delete a restaurant",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await axios.delete(`http://localhost:3000/api/restaurants/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+
+      toast({ title: "Success", description: "Restaurant deleted successfully" });
+      navigate("/restaurant_admin-dashboard");
     } catch (error) {
+      console.error("Delete error:", error);
       toast({
         title: "Error",
-        description: "Failed to delete restaurant",
+        description: "Failed to delete restaurant. Please try again.",
         variant: "destructive",
       });
     }
