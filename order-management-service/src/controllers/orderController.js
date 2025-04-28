@@ -40,13 +40,11 @@ const runConsumer = async (io) => {
                     await order.save();
                     console.log(`Order created: ${data.id}`);
                     await sendNotification('notify_customer', { orderId: data.id, email: data.email, message: 'Order placed successfully. Please complete payment.' });
-                    // Notify customer via Socket.IO
                     io.to(`order:${data.id}`).emit('orderUpdate', {
                         orderId: data.id,
                         status: 'pending',
                         message: 'Order placed successfully. Please complete payment.'
                     });
-                    // Notify restaurant via Socket.IO
                     io.to(`restaurant:${data.restaurantId}`).emit('newOrder', {
                         orderId: data.id,
                         customerId: data.customerId,
@@ -57,9 +55,15 @@ const runConsumer = async (io) => {
                 } else if (action === 'confirm') {
                     if (!data.paymentId) {
                         console.log(`Order ${data.id} cannot be confirmed; no payment ID provided`);
+                        await sendToDLQ(message.value, 'Missing paymentId');
                         return;
                     }
                     const order = await Order.findOne({ id: data.id });
+                    if (!order) {
+                        console.log(`Order ${data.id} not found`);
+                        await sendToDLQ(message.value, 'Order not found');
+                        return;
+                    }
                     if (order.status !== 'pending') {
                         console.log(`Order ${data.id} cannot be confirmed; status is ${order.status}`);
                         return;
@@ -90,6 +94,11 @@ const runConsumer = async (io) => {
                     });
                 } else if (action === 'cancel') {
                     const order = await Order.findOne({ id: data.id });
+                    if (!order) {
+                        console.log(`Order ${data.id} not found`);
+                        await sendToDLQ(message.value, 'Order not found');
+                        return;
+                    }
                     if (['preparing', 'ready', 'delivered'].includes(order.status)) {
                         console.log(`Order ${data.id} cannot be canceled; status is ${order.status}`);
                         return;
@@ -103,13 +112,19 @@ const runConsumer = async (io) => {
                             messages: [{ value: JSON.stringify({ action: 'refund', data: { paymentId: order.paymentId, orderId: data.id } }) }],
                         });
                         await producer.disconnect();
+                        io.to(`order:${data.id}`).emit('orderUpdate', {
+                            orderId: data.id,
+                            status: 'canceled',
+                            message: 'Order canceled and refund initiated'
+                        });
+                    } else {
+                        io.to(`order:${data.id}`).emit('orderUpdate', {
+                            orderId: data.id,
+                            status: 'canceled',
+                            message: 'Order canceled'
+                        });
                     }
                     await sendNotification('notify_customer', { orderId: data.id, email: data.email, message: order.status === 'confirmed' ? 'Order canceled and refund initiated' : 'Order canceled' });
-                    io.to(`order:${data.id}`).emit('orderUpdate', {
-                        orderId: data.id,
-                        status: 'canceled',
-                        message: order.status === 'confirmed' ? 'Order canceled and refund initiated' : 'Order canceled'
-                    });
                 } else if (action === 'prepare') {
                     await Order.updateOne({ id: data.id }, { status: 'preparing' });
                     console.log(`Order preparing: ${data.id}`);
