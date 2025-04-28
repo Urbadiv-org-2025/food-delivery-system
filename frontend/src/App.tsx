@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import DeliveryDashboard from "./pages/DeliveryDashboard"; 
+import DeliveryDashboard from "@/pages/DeliveryDashboard"; 
 
 const queryClient = new QueryClient();
 

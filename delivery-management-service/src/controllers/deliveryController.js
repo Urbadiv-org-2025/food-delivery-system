@@ -16,9 +16,27 @@ const runConsumer = async () => {
             const { action, data } = JSON.parse(message.value);
             if (action === 'assign') {
                 console.log(`Assigning delivery: ${data.id}`);
-                // Simple driver assignment logic (random available driver)
-                const drivers = await User.find({ role: 'delivery_personnel' });
-                const driver = drivers[Math.floor(Math.random() * drivers.length)];
+                
+                // Step 1: Find busy drivers
+                const busyDrivers = await Delivery.find({ 
+                    status: { $in: ['assigned', 'in_transit'] }
+                }).distinct('driverId');
+            
+                // Step 2: Find available drivers
+                const availableDrivers = await User.find({ 
+                    role: 'delivery_personnel', 
+                    id: { $nin: busyDrivers }
+                });
+            
+                if (availableDrivers.length === 0) {
+                    console.error('No available drivers');
+                    return;
+                }
+            
+                // Step 3: Pick a random available driver
+                const driver = availableDrivers[Math.floor(Math.random() * availableDrivers.length)];
+            
+                // Step 4: Create and save new Delivery
                 const delivery = new Delivery({
                     id: data.id,
                     orderId: data.orderId,
@@ -35,13 +53,25 @@ const runConsumer = async () => {
                 });
                 await delivery.save();
                 console.log(`Delivery assigned: ${data.id}`);
+            
+                // Step 5: Notify driver
                 await producer.connect();
                 await producer.send({
                     topic: 'notification-events',
-                    messages: [{ value: JSON.stringify({ action: 'notify_driver', data: { driverId: driver.id, orderId: data.orderId, message: 'New delivery assigned' } }) }],
+                    messages: [{ 
+                        value: JSON.stringify({ 
+                            action: 'notify_driver', 
+                            data: { 
+                                driverId: driver.id, 
+                                orderId: data.orderId, 
+                                message: 'New delivery assigned' 
+                            } 
+                        }) 
+                    }],
                 });
                 await producer.disconnect();
-            } else if (action === 'update_status') {
+            }
+             else if (action === 'update_status') {
                 console.log(`Updating delivery status: ${data.id}`);
                 const delivery = await Delivery.findOne({ id: data.id });
                 if (!delivery) {
@@ -69,9 +99,22 @@ const getDriverDelivery = async (req, res) => {
 };
 
 const getDriverCurrentDelivery = async (req, res) => {
-    const delivery = await Delivery.findOne({ driverId: req.params.driverId , status: 'assigned' });
-    if (!delivery) return res.status(404).json({ error: 'Delivery not found' });
-    res.json(delivery);
-};
+    try {
+      const delivery = await Delivery.findOne({ 
+        driverId: req.params.driverId, 
+        status: { $in: ['assigned', 'in_transit'] } 
+      });
+  
+      if (!delivery) {
+        return res.status(404).json({ error: 'Delivery not found' });
+      }
+  
+      res.json(delivery);
+    } catch (error) {
+      console.error("Error fetching current delivery:", error);
+      res.status(500).json({ error: 'Server error' });
+    }
+  };
+  
 
 module.exports = { runConsumer, getDelivery, getDriverDelivery, getDriverCurrentDelivery };
