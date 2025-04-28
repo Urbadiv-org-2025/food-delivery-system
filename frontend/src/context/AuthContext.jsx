@@ -1,17 +1,8 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, SignupData } from '@/types/user';
 import axios from 'axios';
 
-interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (data: SignupData) => Promise<void>;
-  logout: () => void;
-  isLoading: boolean;
-}
-
-const AuthContext = createContext<AuthContextType>({
+const AuthContext = createContext({
   user: null,
   login: async () => {},
   signup: async () => {},
@@ -21,8 +12,8 @@ const AuthContext = createContext<AuthContextType>({
 
 export const useAuth = () => useContext(AuthContext);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -33,7 +24,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setIsLoading(false);
   }, []);
 
-  const signup = async (data: SignupData) => {
+  const signup = async (data) => {
     try {
       const response = await axios.post('http://localhost:3000/api/users/register', data);
       window.location.href = '/app';
@@ -43,7 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email, password) => {
     try {
       const response = await axios.post('http://localhost:3000/api/users/login', {
         email,

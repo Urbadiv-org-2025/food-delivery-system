@@ -27,6 +27,7 @@ export const SignupForm = () => {
         title: "Success",
         description: "Account created successfully",
       });
+      window.location.href = '/app';
     } catch (error) {
       toast({
         variant: "destructive",
