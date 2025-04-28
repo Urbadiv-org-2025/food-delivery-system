@@ -1,5 +1,5 @@
 const express = require('express');
-const { runConsumer } = require('./controllers/notificationController');
+const { runConsumer } = require('./controllers/paymentController');
 
 const app = express();
 
