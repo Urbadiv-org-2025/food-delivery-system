@@ -222,9 +222,22 @@ router.put(
   restrictTo("restaurant_admin"),
   async (req, res) => {
     try {
+      // First verify if the restaurant belongs to this admin
+      const response = await axios.get(
+        `http://localhost:3002/api/restaurants/${req.params.id}`
+      );
+
+      const restaurant = response.data.data;
+      if (restaurant.restaurantAdminId !== req.user.id) {
+        return res.status(403).json({
+          error: "You are not authorized to update this restaurant",
+        });
+      }
+
       await producer.connect();
       const availabilityData = {
         id: req.params.id,
+        restaurantAdminId: req.user.id,
         available: req.body.available,
       };
       await producer.send({
@@ -583,7 +596,7 @@ router.post(
 router.post(
   "/restaurants",
   authenticate,
-  restrictTo("admin", "restaurant_admin"),
+  restrictTo("restaurant_admin"),
   restaurantUpload.single("image"),
   async (req, res) => {
     try {
@@ -618,11 +631,11 @@ router.post(
       const restaurantData = {
         ...req.body,
         id: Date.now().toString(),
+        restaurantAdminId: req.user.id,
         image: `/uploads/restaurants/${req.file.filename}`,
         available: true,
       };
 
-      // Log the data being sent
       console.log("Creating restaurant with data:", restaurantData);
 
       await producer.send({
@@ -646,10 +659,21 @@ router.post(
 router.put(
   "/restaurants/:id",
   authenticate,
-  restrictTo("admin", "restaurant_admin"),
+  restrictTo("restaurant_admin"),
   restaurantUpload.single("image"),
   async (req, res) => {
     try {
+      const response = await axios.get(
+        `http://localhost:3002/api/restaurants/${req.params.id}`
+      );
+
+      const restaurant = response.data.data;
+      if (restaurant.restaurantAdminId !== req.user.id) {
+        return res.status(403).json({
+          error: "You are not authorized to update this restaurant",
+        });
+      }
+
       const updateData = { ...req.body };
       if (req.file) {
         updateData.image = `/uploads/restaurants/${req.file.filename}`;
@@ -664,6 +688,7 @@ router.put(
               action: "update",
               data: {
                 id: req.params.id,
+                restaurantAdminId: req.user.id,
                 updateData,
               },
             }),
@@ -704,6 +729,52 @@ router.delete(
   }
 );
 
+// Add these routes before the existing restaurant routes
+router.get("/restaurants/filter", async (req, res) => {
+  try {
+    const { cuisine, available, menuCategory } = req.query;
+    const response = await axios.get(
+      "http://localhost:3002/api/restaurants/filter",
+      {
+        params: {
+          cuisine,
+          available,
+          menuCategory,
+        },
+      }
+    );
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/restaurants/nearby", async (req, res) => {
+  try {
+    const { latitude, longitude, maxDistance } = req.query;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({
+        error: "Latitude and longitude are required",
+      });
+    }
+
+    const response = await axios.get(
+      "http://localhost:3002/api/restaurants/nearby",
+      {
+        params: {
+          latitude,
+          longitude,
+          maxDistance,
+        },
+      }
+    );
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Add this new route for getting available restaurants
 router.get("/restaurants/available", async (req, res) => {
   try {
@@ -715,6 +786,22 @@ router.get("/restaurants/available", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+router.get(
+  "/admin/restaurants",
+  authenticate,
+  restrictTo("restaurant_admin"),
+  async (req, res) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3002/api/restaurants/admin/${req.user.id}`
+      );
+      res.json(response.data);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
 
 // Keep the existing routes for getting restaurants
 router.get("/restaurants/:id", async (req, res) => {

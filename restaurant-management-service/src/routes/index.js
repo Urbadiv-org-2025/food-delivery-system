@@ -8,6 +8,12 @@ router.get(
   "/restaurants/available",
   restaurantController.getAvailableRestaurants
 );
+router.get("/restaurants/filter", restaurantController.getFilteredRestaurants);
+router.get("/restaurants/nearby", restaurantController.getNearbyRestaurants);
+router.get(
+  "/restaurants/admin/:adminId",
+  restaurantController.getRestaurantsByAdminId
+);
 
 // Menu routes
 router.get("/menu/:id", restaurantController.getMenuItemById);

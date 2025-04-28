@@ -5,6 +5,21 @@ const connectDB = require("../config/db");
 
 connectDB();
 
+// Add this helper function at the top of the file
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c; // Distance in kilometers
+};
+
 const consumer = kafka.consumer({ groupId: "restaurant-group" });
 
 const runConsumer = async () => {
@@ -140,6 +155,7 @@ const runConsumer = async () => {
               const restaurant = new Restaurant({
                 id: restaurantData.id,
                 name: restaurantData.name,
+                restaurantAdminId: restaurantData.restaurantAdminId, // Add this field
                 location: restaurantLocation,
                 cuisine: restaurantData.cuisine,
                 rating: restaurantData.rating || 0,
@@ -158,9 +174,25 @@ const runConsumer = async () => {
               break;
 
             case "update":
+              // First verify restaurant ownership
+              const existingRestaurant = await Restaurant.findOne({
+                id: restaurantData.id,
+                restaurantAdminId: restaurantData.restaurantAdminId,
+              });
+
+              if (!existingRestaurant) {
+                console.error(
+                  `Restaurant not found or unauthorized access: ${restaurantData.id}`
+                );
+                break;
+              }
+
               const updatedRestaurant = await Restaurant.findOneAndUpdate(
                 { id: restaurantData.id },
-                restaurantData.updateData,
+                {
+                  ...restaurantData.updateData,
+                  restaurantAdminId: restaurantData.restaurantAdminId, // Ensure admin ID doesn't change
+                },
                 { new: true }
               );
               console.log(`Restaurant updated: ${restaurantData.id}`);
@@ -258,6 +290,109 @@ const getAvailableRestaurantMenu = async (req, res) => {
   }
 };
 
+const getFilteredRestaurants = async (req, res) => {
+  try {
+    const { cuisine, available, menuCategory } = req.query;
+    let query = {};
+
+    // Build the filter query
+    if (cuisine) {
+      query.cuisine = cuisine;
+    }
+
+    if (available !== undefined) {
+      query.available = available === "true";
+    }
+
+    let restaurants = await Restaurant.find(query);
+
+    // If menu category is specified, filter restaurants that have menu items in that category
+    if (menuCategory) {
+      const restaurantIds = restaurants.map((r) => r.id);
+      const menuItems = await MenuItem.find({
+        restaurantId: { $in: restaurantIds },
+        category: menuCategory,
+        available: true,
+      });
+
+      const restaurantsWithMenuCategory = new Set(
+        menuItems.map((item) => item.restaurantId)
+      );
+      restaurants = restaurants.filter((r) =>
+        restaurantsWithMenuCategory.has(r.id)
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      count: restaurants.length,
+      data: restaurants,
+    });
+  } catch (error) {
+    console.error("Error filtering restaurants:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Add the getNearbyRestaurants function
+const getNearbyRestaurants = async (req, res) => {
+  try {
+    const { latitude, longitude, maxDistance = 20 } = req.query;
+
+    if (!latitude || !longitude) {
+      return res.status(400).json({
+        error: "Latitude and longitude are required",
+      });
+    }
+
+    const currentLocation = {
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+    };
+
+    // Get all restaurants first
+    const allRestaurants = await Restaurant.find({ available: true });
+
+    // Calculate distance for each restaurant and filter
+    const nearbyRestaurants = allRestaurants
+      .map((restaurant) => {
+        const distance = calculateDistance(
+          currentLocation.latitude,
+          currentLocation.longitude,
+          restaurant.location.latitude,
+          restaurant.location.longitude
+        );
+        return { ...restaurant.toObject(), distance };
+      })
+      .filter((restaurant) => restaurant.distance <= maxDistance)
+      .sort((a, b) => a.distance - b.distance);
+
+    res.status(200).json({
+      success: true,
+      count: nearbyRestaurants.length,
+      data: nearbyRestaurants,
+    });
+  } catch (error) {
+    console.error("Error finding nearby restaurants:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const getRestaurantsByAdminId = async (req, res) => {
+  try {
+    const { adminId } = req.params;
+    const restaurants = await Restaurant.find({ restaurantAdminId: adminId });
+    res.status(200).json({
+      success: true,
+      count: restaurants.length,
+      data: restaurants,
+    });
+  } catch (error) {
+    console.error("Error fetching admin's restaurants:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 module.exports = {
   runConsumer,
   getRestaurantById,
@@ -266,4 +401,7 @@ module.exports = {
   getMenuItemById,
   getRestaurantMenu,
   getAvailableRestaurantMenu,
+  getFilteredRestaurants,
+  getNearbyRestaurants,
+  getRestaurantsByAdminId,
 };

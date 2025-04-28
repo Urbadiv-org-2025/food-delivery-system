@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const restaurantSchema = new mongoose.Schema({
   id: String,
   name: String,
+  restaurantAdminId: { type: String, required: true },
   location: {
     address: { type: String, required: true },
     latitude: { type: Number, required: true },
