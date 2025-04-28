@@ -14,11 +14,13 @@ export const RestaurantCard = ({ restaurant, onClick }: RestaurantCardProps) => 
       onClick={onClick}
     >
       <div className="aspect-video relative overflow-hidden rounded-t-lg">
-        <img 
-          src={restaurant.image} 
-          alt={restaurant.name}
-          className="object-cover w-full h-full"
-        />
+      <img 
+  src={`http://localhost:3000${restaurant.image}`} 
+  alt={restaurant.name}
+  className="object-cover w-full h-full"
+/>
+
+
       </div>
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">

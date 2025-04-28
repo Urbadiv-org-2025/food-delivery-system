@@ -64,12 +64,26 @@ router.post(
         return res.status(400).json({ error: "Image file is required!" });
       }
 
+      // Parse ingredients if it's a string
+      let ingredients = req.body.ingredients;
+      if (typeof ingredients === "string") {
+        try {
+          ingredients = JSON.parse(ingredients);
+        } catch (err) {
+          console.error("Error parsing ingredients:", err);
+          return res.status(400).json({
+            error: "Invalid ingredients format. Must be an array of strings.",
+          });
+        }
+      }
+
       await producer.connect();
       const menuData = {
         ...req.body,
         restaurantId: req.user.id,
         id: Date.now().toString(),
         image: `/uploads/menu-items/${req.file.filename}`,
+        ingredients: ingredients, // Use the parsed ingredients
       };
 
       // Add validation logging
@@ -87,16 +101,6 @@ router.post(
       if (isNaN(menuData.price) || menuData.price <= 0) {
         return res.status(400).json({
           error: "Price must be a positive number",
-        });
-      }
-
-      // Add ingredients validation
-      if (
-        !Array.isArray(menuData.ingredients) ||
-        menuData.ingredients.length === 0
-      ) {
-        return res.status(400).json({
-          error: "At least one ingredient is required",
         });
       }
 
@@ -564,11 +568,17 @@ router.post(
   restrictTo("customer"),
   async (req, res) => {
     try {
-      console.log(req.body);
-      const response = await axios.post(
-        "http://localhost:3005/api/payments",
-        req.body
-      );
+      const { amount, currency, orderId } = req.body;
+      if (!amount || !currency || !orderId) {
+        return res
+          .status(400)
+          .json({ error: "Amount, currency, and orderId required" });
+      }
+      const response = await axios.post("http://localhost:3005/api/payments", {
+        amount,
+        currency,
+        orderId,
+      });
       res.json(response.data);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -582,10 +592,16 @@ router.post(
   restrictTo("restaurant_admin", "admin"),
   async (req, res) => {
     try {
-      const response = await axios.post(
-        "http://localhost:3005/api/refunds",
-        req.body
-      );
+      const { paymentId, orderId } = req.body;
+      if (!paymentId || !orderId) {
+        return res
+          .status(400)
+          .json({ error: "Payment ID and orderId required" });
+      }
+      const response = await axios.post("http://localhost:3005/api/refunds", {
+        paymentId,
+        orderId,
+      });
       res.json(response.data);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -663,18 +679,31 @@ router.put(
   restaurantUpload.single("image"),
   async (req, res) => {
     try {
-      const response = await axios.get(
-        `http://localhost:3002/api/restaurants/${req.params.id}`
-      );
+      console.log("Update request for restaurant:", req.params.id);
+      console.log("Update data:", req.body);
 
-      const restaurant = response.data.data;
-      if (restaurant.restaurantAdminId !== req.user.id) {
-        return res.status(403).json({
-          error: "You are not authorized to update this restaurant",
-        });
+      // Prepare update data
+      const updateData = { ...req.body };
+
+      // Handle location data if present
+      if (
+        req.body["location.address"] ||
+        req.body["location.latitude"] ||
+        req.body["location.longitude"]
+      ) {
+        updateData.location = {
+          address: req.body["location.address"],
+          latitude: req.body["location.latitude"],
+          longitude: req.body["location.longitude"],
+        };
+
+        // Remove the dot notation fields to avoid duplicates
+        delete updateData["location.address"];
+        delete updateData["location.latitude"];
+        delete updateData["location.longitude"];
       }
 
-      const updateData = { ...req.body };
+      // Handle image if present
       if (req.file) {
         updateData.image = `/uploads/restaurants/${req.file.filename}`;
       }
@@ -689,15 +718,19 @@ router.put(
               data: {
                 id: req.params.id,
                 restaurantAdminId: req.user.id,
-                updateData,
+                updateData: updateData,
               },
             }),
           },
         ],
       });
       await producer.disconnect();
-      res.json({ message: "Restaurant update request sent" });
+      res.json({
+        message: "Restaurant update request sent",
+        data: updateData,
+      });
     } catch (err) {
+      console.error("Error updating restaurant:", err);
       res.status(500).json({ error: err.message });
     }
   }

@@ -1,8 +1,15 @@
 const express = require("express");
 const routes = require("./routes");
+const cors = require("cors");
 const { runConsumer } = require("./controllers/restaurantController");
 
 const app = express();
+
+app.use(
+  cors({
+    origin: "http://localhost:8080", // 👈 Your frontend URL
+  })
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

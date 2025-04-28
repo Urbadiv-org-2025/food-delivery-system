@@ -14,3 +14,16 @@ export interface Restaurant {
   available: boolean;
   restaurantAdminId: string;
 }
+
+export interface MenuItem {
+    id: string;
+    restaurantId: string;
+    name: string;
+    price: number;
+    description: string;
+    image: string;
+    available: boolean;
+    category: "appetizer" | "main-course" | "dessert" | "beverage";
+    ingredients: string[];
+    dietaryRestrictions: ("vegetarian" | "vegan" | "Non-Veg" | "nut-free")[];
+}

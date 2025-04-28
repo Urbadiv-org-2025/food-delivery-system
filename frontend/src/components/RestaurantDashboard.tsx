@@ -57,7 +57,7 @@ const RestaurantDashboard = () => {
             <RestaurantCard 
               key={restaurant.id} 
               restaurant={restaurant}
-              onClick={() => navigate(`/restaurants/${restaurant.id}`)}
+              onClick={() => navigate(`/restaurant/${restaurant.id}`)}
             />
           ))}
         </div>

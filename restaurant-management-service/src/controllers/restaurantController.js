@@ -174,28 +174,88 @@ const runConsumer = async () => {
               break;
 
             case "update":
-              // First verify restaurant ownership
-              const existingRestaurant = await Restaurant.findOne({
-                id: restaurantData.id,
-                restaurantAdminId: restaurantData.restaurantAdminId,
-              });
+              try {
+                console.log("Update restaurant data received:", restaurantData);
 
-              if (!existingRestaurant) {
-                console.error(
-                  `Restaurant not found or unauthorized access: ${restaurantData.id}`
+                // Extract the correct ID from the message
+                const restaurantId = restaurantData.data.id;
+                console.log("Restaurant ID:", restaurantId);
+
+                // Find the restaurant first
+                const restaurantToUpdate = await Restaurant.findOne({
+                  id: restaurantId,
+                });
+
+                if (!restaurantToUpdate) {
+                  console.error(
+                    `Restaurant not found with id: ${restaurantId}`
+                  );
+                  break;
+                }
+
+                // Extract update data
+                const { updateData } = restaurantData.data;
+                console.log("Update data:", updateData);
+
+                // Create update object with schema validation
+                const updateObject = {};
+
+                // Handle location object correctly
+                if (updateData.location) {
+                  updateObject.location = {
+                    address:
+                      updateData.location.address ||
+                      restaurantToUpdate.location.address,
+                    latitude:
+                      Number(updateData.location.latitude) ||
+                      restaurantToUpdate.location.latitude,
+                    longitude:
+                      Number(updateData.location.longitude) ||
+                      restaurantToUpdate.location.longitude,
+                  };
+                }
+
+                // Handle other fields
+                const allowedFields = [
+                  "name",
+                  "cuisine",
+                  "openingHours",
+                  "available",
+                  "rating",
+                  "reviews",
+                  "image",
+                ];
+
+                allowedFields.forEach((field) => {
+                  if (updateData[field] !== undefined) {
+                    updateObject[field] = updateData[field];
+                  }
+                });
+
+                console.log("Final update object:", updateObject);
+
+                // Perform the update with validation
+                const updatedRestaurant = await Restaurant.findOneAndUpdate(
+                  { id: restaurantId },
+                  { $set: updateObject },
+                  { new: true, runValidators: true }
                 );
-                break;
-              }
 
-              const updatedRestaurant = await Restaurant.findOneAndUpdate(
-                { id: restaurantData.id },
-                {
-                  ...restaurantData.updateData,
-                  restaurantAdminId: restaurantData.restaurantAdminId, // Ensure admin ID doesn't change
-                },
-                { new: true }
-              );
-              console.log(`Restaurant updated: ${restaurantData.id}`);
+                if (!updatedRestaurant) {
+                  console.error(
+                    "Update failed - restaurant not found or validation error"
+                  );
+                  break;
+                }
+
+                console.log(
+                  "Restaurant updated successfully:",
+                  updatedRestaurant
+                );
+              } catch (error) {
+                console.error("Error in restaurant update:", error);
+                console.error(error.stack);
+              }
               break;
 
             case "delete":

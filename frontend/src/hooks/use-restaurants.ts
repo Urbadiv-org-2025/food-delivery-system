@@ -12,9 +12,18 @@ export function useRestaurants() {
   useEffect(() => {
     const fetchRestaurants = async () => {
       try {
-        const response = await axios.get(`http://localhost:3002/api/restaurants/admin/${user?.id}`);
+        const token = localStorage.getItem('token');  // ✅ Get the token saved at login
+        const response = await axios.get(
+          `http://localhost:3002/api/restaurants/admin/${user?.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,          // ✅ Add the token here!
+            },
+          }
+        );
         setRestaurants(response.data.data);
       } catch (err) {
+        console.error('Fetch error:', err);
         setError('Failed to fetch restaurants');
       } finally {
         setIsLoading(false);

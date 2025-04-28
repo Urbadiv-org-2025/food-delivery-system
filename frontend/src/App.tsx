@@ -7,6 +7,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import RestaurantDashboard from "./components/RestaurantDashboard";
+import RestaurantDetails from "./pages/RestaurantDetails";
+import RestaurantEdit from './pages/EditRestaurant'; 
 import LandingPage from "./pages/LandingPage";
 import { ScrollToTop } from "./components/ScrollToTop";
 
@@ -26,6 +28,8 @@ const App = () => (
             <Route path="/login" element={<Navigate to="/app" replace />} />
             <Route path="/delivery_personnel-dashboard" element={<div>Delivery Dashboard</div>} />
             <Route path="/restaurant_admin-dashboard" element={<RestaurantDashboard />} />
+            <Route path="/restaurant/:id" element={<RestaurantDetails />} />
+            <Route path="/restaurants/:id/edit" element={<RestaurantEdit />} />
             <Route path="/admin-dashboard" element={<div>Admin Dashboard</div>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
