@@ -17,7 +17,7 @@ const mockItems = [
 ];
 
 const Index = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [orderId, setOrderId] = useState<string | null>(null);
   const [isLogin, setIsLogin] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
@@ -74,7 +74,7 @@ const Index = () => {
               variant="ghost" 
               size="sm" 
               onClick={() => {
-                localStorage.removeItem('token');
+                logout();
                 window.location.href = '/';
               }}
             >

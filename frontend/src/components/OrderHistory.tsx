@@ -45,7 +45,7 @@ export const OrderHistory = ({ onViewOrder }: OrderHistoryProps) => {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('token');
-      const response = await axios.get('http://localhost:3000/api/orders/history', {
+      const response = await axios.get('http://localhost:3000/api/orders?status=delivered', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
