@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import RestaurantDashboard from "./components/RestaurantDashboard";
 
 const queryClient = new QueryClient();
 
@@ -20,7 +21,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/delivery_personnel-dashboard" element={<div>Delivery Dashboard</div>} />
-            <Route path="/restaurant_admin-dashboard" element={<div>Restaurant Dashboard</div>} />
+            <Route path="/restaurant_admin-dashboard" element={<RestaurantDashboard />} />
             <Route path="/admin-dashboard" element={<div>Admin Dashboard</div>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
