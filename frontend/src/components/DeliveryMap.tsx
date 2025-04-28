@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { GoogleMap, Marker, DirectionsRenderer, useJsApiLoader } from '@react-google-maps/api';
+import type { Libraries } from '@react-google-maps/api';
 
 const containerStyle = {
   width: '100%',
@@ -14,17 +14,16 @@ interface Location {
 
 interface DeliveryMapProps {
   startLocation: Location;
+  stopLocation?: Location | null; // Optional
   endLocation: Location;
   className?: string;
 }
 
-// Use Libraries type from @react-google-maps/api
-import type { Libraries } from '@react-google-maps/api';
-
 const libraries: Libraries = ["places"];
 
-const DeliveryMap = ({ startLocation, endLocation, className = "" }: DeliveryMapProps) => {
+const DeliveryMap = ({ startLocation, stopLocation, endLocation, className = "" }: DeliveryMapProps) => {
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
+  const [estimatedTime, setEstimatedTime] = useState<string | null>(null); // NEW: state for estimated time
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: 'AIzaSyAjt-GCTto9WtDApGDNMGD1wkppIli-pHA',
@@ -34,28 +33,35 @@ const DeliveryMap = ({ startLocation, endLocation, className = "" }: DeliveryMap
   useEffect(() => {
     if (isLoaded && startLocation && endLocation) {
       const directionsService = new google.maps.DirectionsService();
+      const waypoints = stopLocation
+        ? [{ location: { lat: stopLocation.latitude, lng: stopLocation.longitude }, stopover: true }]
+        : [];
+
       directionsService.route(
         {
-          origin: {
-            lat: startLocation.latitude,
-            lng: startLocation.longitude,
-          },
-          destination: {
-            lat: endLocation.latitude,
-            lng: endLocation.longitude,
-          },
+          origin: { lat: startLocation.latitude, lng: startLocation.longitude },
+          destination: { lat: endLocation.latitude, lng: endLocation.longitude },
           travelMode: google.maps.TravelMode.DRIVING,
+          waypoints,
         },
         (result, status) => {
           if (status === google.maps.DirectionsStatus.OK) {
             setDirections(result);
+
+            // NEW: Extract estimated time
+            const legs = result.routes[0]?.legs;
+            if (legs && legs.length > 0) {
+              const totalDuration = legs.reduce((acc, leg) => acc + (leg.duration?.value || 0), 0);
+              const minutes = Math.ceil(totalDuration / 60);
+              setEstimatedTime(`${minutes} min`);
+            }
           } else {
             console.error(`Error fetching directions: ${status}`);
           }
         }
       );
     }
-  }, [isLoaded, startLocation, endLocation]);
+  }, [isLoaded, startLocation, stopLocation, endLocation]);
 
   if (!isLoaded) {
     return (
@@ -91,10 +97,7 @@ const DeliveryMap = ({ startLocation, endLocation, className = "" }: DeliveryMap
         }}
       >
         <Marker
-          position={{
-            lat: startLocation.latitude,
-            lng: startLocation.longitude,
-          }}
+          position={{ lat: startLocation.latitude, lng: startLocation.longitude }}
           title="Start Location"
           animation={google.maps.Animation.DROP}
           icon={{
@@ -102,11 +105,19 @@ const DeliveryMap = ({ startLocation, endLocation, className = "" }: DeliveryMap
             scaledSize: new google.maps.Size(40, 40),
           }}
         />
+        {stopLocation && (
+          <Marker
+            position={{ lat: stopLocation.latitude, lng: stopLocation.longitude }}
+            title="Stop Location"
+            animation={google.maps.Animation.DROP}
+            icon={{
+              url: "http://maps.google.com/mapfiles/kml/shapes/dining.png",
+              scaledSize: new google.maps.Size(25, 25),
+            }}
+          />
+        )}
         <Marker
-          position={{
-            lat: endLocation.latitude,
-            lng: endLocation.longitude,
-          }}
+          position={{ lat: endLocation.latitude, lng: endLocation.longitude }}
           title="End Location"
           animation={google.maps.Animation.DROP}
           icon={{
@@ -128,6 +139,13 @@ const DeliveryMap = ({ startLocation, endLocation, className = "" }: DeliveryMap
           />
         )}
       </GoogleMap>
+
+      {/* NEW: Show estimated delivery time */}
+      {estimatedTime && (
+        <div className="mt-2 text-center text-sm text-gray-600 font-medium">
+          Estimated Delivery Time: <span className="text-indigo-600">{estimatedTime}</span>
+        </div>
+      )}
     </div>
   );
 };

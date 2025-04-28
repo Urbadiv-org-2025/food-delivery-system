@@ -276,6 +276,17 @@ router.get('/deliveries/:id', authenticate, restrictTo('customer', 'delivery_per
     }
 });
 
+router.get('/deliveriesorder/:orderId', authenticate, restrictTo('customer', 'delivery_personnel'), async (req, res) => {
+    try {   
+        const response = await axios.get(`http://localhost:3004/api/deliveriesorder/${req.params.orderId}`);
+        res.json(response.data);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
+);
+
 router.get('/deliveriesdriver/:driverId', authenticate, restrictTo('customer', 'delivery_personnel'), async (req, res) => {
     try {
         const response = await axios.get(`http://localhost:3004/api/deliveriesdriver/${req.params.driverId}`);

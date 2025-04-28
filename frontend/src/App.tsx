@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import DeliveryDashboard from "@/pages/DeliveryDashboard"; 
+import CustomerTrackingPage from "./pages/CustomerTrackingPage";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +32,9 @@ const App = () => {
               <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} />
               <Route path="/restaurant_admin-dashboard" element={<div>Restaurant Dashboard</div>} />
               <Route path="/admin-dashboard" element={<div>Admin Dashboard</div>} />
+              <Route path="/customer-tracking" element={<CustomerTrackingPage deliveryId={"456"} />} />
+              {/* Add more routes as needed */}
+              {/* Catch-all route for 404 */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

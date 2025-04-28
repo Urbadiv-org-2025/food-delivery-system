@@ -1,13 +1,17 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { useAuth } from "@/context/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DeliveryMap from "@/components/DeliveryMap"; 
 import DeliveryInfoCard from "@/components/DeliveryInfoCard";
 import ActionButton from "@/components/ActionButton";
 import { Route } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+
+import { io } from "socket.io-client";
+
+// double check the socket connection URL
+const socket = io("http://localhost:3004");
 
 const DriverCurrentDelivery = () => {
   const { user } = useAuth();
@@ -15,6 +19,8 @@ const DriverCurrentDelivery = () => {
   const token = localStorage.getItem("token");
   const driverId = user?.id;
   const queryClient = useQueryClient();
+
+  const [currentLocation, setCurrentLocation] = useState<{ latitude: number; longitude: number } | null>(null);
 
   // Fetch current delivery data
   const {
@@ -53,7 +59,7 @@ const DriverCurrentDelivery = () => {
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["currentDelivery", driverId] });
-      
+
       const message = variables === "in_transit" 
         ? "Delivery started successfully! Drive safely." 
         : "Delivery completed successfully!";
@@ -83,6 +89,33 @@ const DriverCurrentDelivery = () => {
     updateDeliveryStatus.mutate("delivered");
   };
 
+  // Track driver's live location
+  useEffect(() => {
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setCurrentLocation({ latitude, longitude });
+
+        if (currentDelivery?.orderId) {
+          socket.emit('driverLocationUpdate', {
+            deliveryId: currentDelivery.orderId,
+            location: { latitude, longitude },
+          });
+        }
+      },
+      (error) => {
+        console.error("Error getting location:", error);
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 10000,
+        timeout: 5000,
+      }
+    );
+
+    return () => navigator.geolocation.clearWatch(watchId);
+  }, [currentDelivery?.orderId]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -100,19 +133,6 @@ const DriverCurrentDelivery = () => {
       </div>
     );
   }
-
-  // // Error state (commented out as per the code you shared, but keeping it as an option)
-  // if (error) {
-  //   return (
-  //     <div className="w-full max-w-4xl mx-auto px-4 py-8">
-  //       <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-  //         <div className="flex items-center justify-center h-60 text-red-500 font-semibold">
-  //           Error fetching current delivery. Please try again later.
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   // No active delivery state
   if (!currentDelivery) {
@@ -134,7 +154,20 @@ const DriverCurrentDelivery = () => {
     );
   }
 
-  // Active delivery state
+  // Decide the start and end points for map
+  let mapStartLocation = null;
+  let mapEndLocation = null;
+
+  if (currentLocation) {
+    if (currentDelivery.status === "assigned") {
+      mapStartLocation = currentLocation;
+      mapEndLocation = currentDelivery.startLocation;
+    } else if (currentDelivery.status === "in_transit") {
+      mapStartLocation = currentLocation;
+      mapEndLocation = currentDelivery.endLocation;
+    }
+  }
+
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 space-y-6">
@@ -157,11 +190,13 @@ const DriverCurrentDelivery = () => {
           />
 
           {/* Map */}
-          <DeliveryMap
-            startLocation={currentDelivery.startLocation}
-            endLocation={currentDelivery.endLocation}
-            className="border-2 border-gray-200 shadow-sm"
-          />
+          {mapStartLocation && mapEndLocation && (
+            <DeliveryMap
+              startLocation={mapStartLocation}
+              endLocation={mapEndLocation}
+              className="border-2 border-gray-200 shadow-sm"
+            />
+          )}
 
           {/* Action Button */}
           {(currentDelivery.status === "assigned" || currentDelivery.status === "in_transit") && (
