@@ -1,10 +1,11 @@
+
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { CheckIcon, ShoppingCart } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
+import { MapSelector } from './MapSelector';
 import axios from 'axios';
 
 interface OrderItem {
@@ -21,31 +22,12 @@ interface OrderFormProps {
 
 export const OrderForm = ({ items, restaurantId, onOrderComplete }: OrderFormProps) => {
   const [location, setLocation] = useState({ latitude: 0, longitude: 0 });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const getLocation = () => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-          });
-          toast({
-            title: "Location captured",
-            description: "Your delivery location has been set",
-          });
-        },
-        () => {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Unable to get location",
-          });
-        }
-      );
-    }
+  const handleLocationSelect = (selectedLocation: { latitude: number, longitude: number }) => {
+    setLocation(selectedLocation);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,12 +36,13 @@ export const OrderForm = ({ items, restaurantId, onOrderComplete }: OrderFormPro
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Please set your delivery location",
+        description: "Please set your delivery location"
       });
       return;
     }
 
     try {
+      setIsSubmitting(true);
       const token = localStorage.getItem('token');
       const response = await axios.post('http://localhost:3000/api/orders', {
         restaurantId,
@@ -75,15 +58,18 @@ export const OrderForm = ({ items, restaurantId, onOrderComplete }: OrderFormPro
 
       toast({
         title: "Success",
-        description: "Order created successfully",
+        description: "Order created successfully"
       });
       onOrderComplete(response.data.orderId);
     } catch (error) {
+      console.error('Order creation error:', error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create order",
+        description: "Failed to create order"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -106,26 +92,17 @@ export const OrderForm = ({ items, restaurantId, onOrderComplete }: OrderFormPro
           </div>
         </div>
       </div>
-      <div className="space-y-4">
-        <Button 
-          type="button" 
-          onClick={getLocation}
-          variant="outline"
-          className="w-full"
-        >
-          {location.latitude && location.longitude ? (
-            <CheckIcon className="mr-2 h-4 w-4" />
-          ) : null}
-          Set Delivery Location
-        </Button>
-        <Button 
-          onClick={handleSubmit}
-          className="w-full bg-[#FF4B3E] hover:bg-[#FF6B5E]"
-        >
-          <ShoppingCart className="mr-2 h-4 w-4" />
-          Place Order
-        </Button>
-      </div>
+      
+      <MapSelector onLocationSelect={handleLocationSelect} />
+
+      <Button 
+        onClick={handleSubmit}
+        className="w-full bg-[#FF4B3E] hover:bg-[#FF6B5E]"
+        disabled={isSubmitting}
+      >
+        <ShoppingCart className="mr-2 h-4 w-4" />
+        {isSubmitting ? 'Creating Order...' : 'Place Order'}
+      </Button>
     </Card>
   );
 };
