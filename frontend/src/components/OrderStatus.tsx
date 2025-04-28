@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Card } from '@/components/ui/card';
@@ -49,8 +48,6 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
       });
       if (response.data) {
         setOrder(response.data);
-        
-        // Show payment form if order is pending
         if (response.data.status === 'pending' && !response.data.paymentId) {
           setShowPayment(true);
         } else {
@@ -59,90 +56,104 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
       }
     } catch (error) {
       console.error('Error fetching order:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to fetch order details'
+      });
     }
   };
 
   const cancelOrder = async () => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`http://localhost:3000/api/orders/${orderId}/cancel`, {}, {
+      await axios.delete(`http://localhost:3000/api/orders/${orderId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        data: { email: user?.email }
       });
-      
+
       toast({
-        title: "Order Canceled",
-        description: "Your order has been canceled"
+        title: 'Order Canceled',
+        description: 'Your order has been canceled'
       });
-      
+
       fetchOrder();
       setCancelDialog(false);
     } catch (error) {
       console.error('Error canceling order:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to cancel order"
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to cancel order'
       });
     }
   };
 
   useEffect(() => {
     fetchOrder();
-    
+
     // Setup WebSocket connection
     const socket = io('http://localhost:3003', {
       transports: ['websocket'],
       upgrade: false,
+      auth: {
+        token: localStorage.getItem('token') // Optional: for auth
+      }
     });
-    
+
     socketRef.current = socket;
-    
+
     socket.on('connect', () => {
-      console.log('Socket.io connected');
-      socket.emit('join', `order:${orderId}`);
+      console.log('Socket.IO connected:', socket.id);
+      socket.emit('joinOrderRoom', `order:${orderId}`);
+      console.log(`Emitted joinOrderRoom for order:${orderId}`);
     });
-    
+
     socket.on('orderUpdate', (data) => {
-      console.log('Order update received:', data);
+      console.log('Received orderUpdate:', data);
       if (data.orderId === orderId) {
-        // Update order status in real-time
         fetchOrder();
-        
-        // Show toast notification
         toast({
-          title: "Order Status Updated",
+          title: 'Order Status Updated',
           description: data.message
         });
       }
     });
-    
+
     socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-      // Fallback to polling
+      console.error('Socket.IO connection error:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Connection Error',
+        description: 'Failed to connect to real-time updates. Using polling.'
+      });
       fetchOrder();
       const interval = setInterval(fetchOrder, 10000);
       return () => clearInterval(interval);
     });
-    
+
+    socket.on('error', (error) => {
+      console.error('Socket.IO error:', error);
+    });
+
     return () => {
-      if (socket) {
-        socket.disconnect();
-      }
+      socket.disconnect();
+      console.log('Socket.IO disconnected');
     };
-  }, [orderId]);
+  }, [orderId, toast, user?.email]);
 
   if (!order) {
     return (
-      <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF4B3E]"></div>
-      </div>
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF4B3E]"></div>
+        </div>
     );
   }
 
   const canCancel = ['pending', 'confirmed'].includes(order.status);
-  
+
   const getProgressValue = () => {
     const statusToProgress = {
       'pending': 0,
@@ -184,110 +195,110 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
   };
 
   return (
-    <>
-      <Card className="p-6 space-y-4">
-        {order.status === 'canceled' && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-            <div className="flex items-center">
-              <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-              <p className="text-red-700">
-                This order has been canceled.
+      <>
+        <Card className="p-6 space-y-4">
+          {order.status === 'canceled' && (
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                <div className="flex items-center">
+                  <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+                  <p className="text-red-700">
+                    This order has been canceled.
+                  </p>
+                </div>
+              </div>
+          )}
+
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-semibold">Order Status</h2>
+            <span className={`px-3 py-1 rounded-full text-white text-sm ${statusColors[order.status]}`}>
+            {order.status.toUpperCase()}
+          </span>
+          </div>
+
+          {order.status !== 'canceled' && (
+              <div className="space-y-2">
+                <Progress value={getProgressValue()} className="h-2" />
+                <div className="flex justify-between text-xs text-gray-500">
+                  <span>Placed</span>
+                  <span>Confirmed</span>
+                  <span>Preparing</span>
+                  <span>Ready</span>
+                  <span>Delivered</span>
+                </div>
+              </div>
+          )}
+
+          <div className="flex items-center justify-center py-4">
+            <div className="text-center">
+              {getStatusIcon()}
+              <p className="mt-2 font-medium">
+                {order.status === 'preparing' && "Your food is being prepared..."}
+                {order.status === 'ready' && "Your food is ready for pickup!"}
+                {order.status === 'delivered' && "Your food has been delivered!"}
+                {order.status === 'confirmed' && "Your order has been confirmed!"}
+                {order.status === 'pending' && "Waiting for confirmation..."}
+                {order.status === 'canceled' && "Your order has been canceled."}
               </p>
             </div>
           </div>
-        )}
 
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Order Status</h2>
-          <span className={`px-3 py-1 rounded-full text-white text-sm ${statusColors[order.status]}`}>
-            {order.status.toUpperCase()}
-          </span>
-        </div>
-
-        {order.status !== 'canceled' && (
-          <div className="space-y-2">
-            <Progress value={getProgressValue()} className="h-2" />
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>Placed</span>
-              <span>Confirmed</span>
-              <span>Preparing</span>
-              <span>Ready</span>
-              <span>Delivered</span>
+          <div className="space-y-4">
+            {order.items.map((item, index) => (
+                <div key={index} className="flex justify-between">
+                  <span>{item.name} x {item.quantity}</span>
+                  <span>${(item.price * item.quantity).toFixed(2)}</span>
+                </div>
+            ))}
+            <div className="border-t pt-2">
+              <div className="flex justify-between font-semibold">
+                <span>Total</span>
+                <span>${order.total.toFixed(2)}</span>
+              </div>
+            </div>
+            <div className="flex items-center text-sm text-gray-500">
+              <MapPin className="mr-2 h-4 w-4" />
+              <span>Delivery Location: {order.location.coordinates.join(', ')}</span>
             </div>
           </div>
-        )}
-        
-        <div className="flex items-center justify-center py-4">
-          <div className="text-center">
-            {getStatusIcon()}
-            <p className="mt-2 font-medium">
-              {order.status === 'preparing' && "Your food is being prepared..."}
-              {order.status === 'ready' && "Your food is ready for pickup!"}
-              {order.status === 'delivered' && "Your food has been delivered!"}
-              {order.status === 'confirmed' && "Your order has been confirmed!"}
-              {order.status === 'pending' && "Waiting for confirmation..."}
-              {order.status === 'canceled' && "Your order has been canceled."}
-            </p>
-          </div>
-        </div>
 
-        <div className="space-y-4">
-          {order.items.map((item, index) => (
-            <div key={index} className="flex justify-between">
-              <span>{item.name} x {item.quantity}</span>
-              <span>${(item.price * item.quantity).toFixed(2)}</span>
-            </div>
-          ))}
-          <div className="border-t pt-2">
-            <div className="flex justify-between font-semibold">
-              <span>Total</span>
-              <span>${order.total.toFixed(2)}</span>
-            </div>
-          </div>
-          <div className="flex items-center text-sm text-gray-500">
-            <MapPin className="mr-2 h-4 w-4" />
-            <span>Delivery Location: {order.location.coordinates.join(', ')}</span>
-          </div>
-        </div>
-
-        <div className="flex justify-between pt-4">
-          <Button 
-            variant="outline" 
-            onClick={onPlaceNewOrder}
-          >
-            Place New Order
-          </Button>
-          {canCancel && (
-            <Button 
-              variant="destructive" 
-              onClick={() => setCancelDialog(true)}
+          <div className="flex justify-between pt-4">
+            <Button
+                variant="outline"
+                onClick={onPlaceNewOrder}
             >
-              Cancel Order
+              Place New Order
             </Button>
-          )}
-        </div>
-      </Card>
+            {canCancel && (
+                <Button
+                    variant="destructive"
+                    onClick={() => setCancelDialog(true)}
+                >
+                  Cancel Order
+                </Button>
+            )}
+          </div>
+        </Card>
 
-      {showPayment && (
-        <div className="mt-4">
-          <PaymentForm order={order} onPaymentComplete={fetchOrder} />
-        </div>
-      )}
+        {showPayment && (
+            <div className="mt-4">
+              <PaymentForm order={order} onPaymentComplete={fetchOrder} />
+            </div>
+        )}
 
-      <Dialog open={cancelDialog} onOpenChange={setCancelDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Cancel Order</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to cancel this order? If payment was made, you will receive a refund.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelDialog(false)}>No, Keep Order</Button>
-            <Button variant="destructive" onClick={cancelOrder}>Yes, Cancel Order</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+        <Dialog open={cancelDialog} onOpenChange={setCancelDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Cancel Order</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to cancel this order? If payment was made, you will receive a refund.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setCancelDialog(false)}>No, Keep Order</Button>
+              <Button variant="destructive" onClick={cancelOrder}>Yes, Cancel Order</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
   );
 };

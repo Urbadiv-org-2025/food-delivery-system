@@ -148,8 +148,8 @@ router.delete('/orders/:id', authenticate, restrictTo('customer'), async (req, r
 router.post('/orders/:id/confirm', authenticate, restrictTo('customer'), async (req, res) => {
     try {
         const { paymentId, restaurantId } = req.body;
-        if (!paymentId) {
-            return res.status(400).json({ error: 'Payment ID required' });
+        if (!paymentId || !restaurantId) {
+            return res.status(400).json({ error: 'Payment ID and restaurant ID required' });
         }
         await producer.connect();
         const orderData = { id: req.params.id, paymentId, restaurantId, orderId: req.params.id };
@@ -277,8 +277,15 @@ router.get('/deliveries/:id', authenticate, restrictTo('customer', 'delivery_per
 
 router.post('/payments', authenticate, restrictTo('customer'), async (req, res) => {
     try {
-        console.log(req.body);
-        const response = await axios.post('http://localhost:3005/api/payments', req.body);
+        const { amount, currency, orderId } = req.body;
+        if (!amount || !currency || !orderId) {
+            return res.status(400).json({ error: 'Amount, currency, and orderId required' });
+        }
+        const response = await axios.post('http://localhost:3005/api/payments', {
+            amount,
+            currency,
+            orderId
+        });
         res.json(response.data);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -287,12 +294,18 @@ router.post('/payments', authenticate, restrictTo('customer'), async (req, res) 
 
 router.post('/refunds', authenticate, restrictTo('restaurant_admin', 'admin'), async (req, res) => {
     try {
-        const response = await axios.post('http://localhost:3005/api/refunds', req.body);
+        const { paymentId, orderId } = req.body;
+        if (!paymentId || !orderId) {
+            return res.status(400).json({ error: 'Payment ID and orderId required' });
+        }
+        const response = await axios.post('http://localhost:3005/api/refunds', {
+            paymentId,
+            orderId
+        });
         res.json(response.data);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
-
 
 module.exports = router;

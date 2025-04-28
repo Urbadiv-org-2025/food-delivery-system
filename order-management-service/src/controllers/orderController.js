@@ -45,6 +45,7 @@ const runConsumer = async (io) => {
                         status: 'pending',
                         message: 'Order placed successfully. Please complete payment.'
                     });
+                    console.log(`Emitted orderUpdate to order:${data.id}`);
                     io.to(`restaurant:${data.restaurantId}`).emit('newOrder', {
                         orderId: data.id,
                         customerId: data.customerId,
@@ -52,6 +53,7 @@ const runConsumer = async (io) => {
                         total: order.total,
                         message: 'New order received'
                     });
+                    console.log(`Emitted newOrder to restaurant:${data.restaurantId}`);
                 } else if (action === 'confirm') {
                     if (!data.paymentId) {
                         console.log(`Order ${data.id} cannot be confirmed; no payment ID provided`);
@@ -76,6 +78,7 @@ const runConsumer = async (io) => {
                         status: 'confirmed',
                         message: 'Order confirmed successfully'
                     });
+                    console.log(`Emitted orderUpdate to order:${data.id}`);
                 } else if (action === 'update') {
                     const order = await Order.findOne({ id: data.id });
                     if (order.status !== 'pending') {
@@ -92,6 +95,7 @@ const runConsumer = async (io) => {
                         status: 'pending',
                         message: 'Order updated successfully'
                     });
+                    console.log(`Emitted orderUpdate to order:${data.id}`);
                 } else if (action === 'cancel') {
                     const order = await Order.findOne({ id: data.id });
                     if (!order) {
@@ -117,12 +121,14 @@ const runConsumer = async (io) => {
                             status: 'canceled',
                             message: 'Order canceled and refund initiated'
                         });
+                        console.log(`Emitted orderUpdate to order:${data.id}`);
                     } else {
                         io.to(`order:${data.id}`).emit('orderUpdate', {
                             orderId: data.id,
                             status: 'canceled',
                             message: 'Order canceled'
                         });
+                        console.log(`Emitted orderUpdate to order:${data.id}`);
                     }
                     await sendNotification('notify_customer', { orderId: data.id, email: data.email, message: order.status === 'confirmed' ? 'Order canceled and refund initiated' : 'Order canceled' });
                 } else if (action === 'prepare') {
@@ -134,6 +140,7 @@ const runConsumer = async (io) => {
                         status: 'preparing',
                         message: 'Order is being prepared'
                     });
+                    console.log(`Emitted orderUpdate to order:${data.id}`);
                 } else if (action === 'ready') {
                     await Order.updateOne({ id: data.id }, { status: 'ready' });
                     console.log(`Order ready: ${data.id}`);
@@ -148,6 +155,7 @@ const runConsumer = async (io) => {
                         status: 'ready',
                         message: 'Order is ready for delivery'
                     });
+                    console.log(`Emitted orderUpdate to order:${data.id}`);
                 } else if (action === 'deliver') {
                     await Order.updateOne({ id: data.id }, { status: 'delivered' });
                     console.log(`Order delivered: ${data.id}`);
@@ -157,6 +165,7 @@ const runConsumer = async (io) => {
                         status: 'delivered',
                         message: 'Order delivered'
                     });
+                    console.log(`Emitted orderUpdate to order:${data.id}`);
                 }
             } catch (error) {
                 console.error(`Error processing message on topic ${topic}, partition ${partition}, offset ${message.offset}:`, error);
