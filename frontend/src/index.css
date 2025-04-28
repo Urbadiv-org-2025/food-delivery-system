@@ -1,6 +1,22 @@
+@import 'ol/ol.css';
+@import 'maplibre-gl/dist/maplibre-gl.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.map-container {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  z-index: 0 !important;
+}
+.maplibregl-map,
+.maplibregl-canvas-container,
+.maplibregl-canvas {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+}
 
 @layer base {
   :root {

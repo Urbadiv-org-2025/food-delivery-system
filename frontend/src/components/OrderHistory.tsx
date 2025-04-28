@@ -24,7 +24,6 @@ interface Order {
   status: string;
   items: OrderItem[];
   total: number;
-  createdAt: string;
   location: Location;
   canceledBy?: string;
 }
@@ -39,6 +38,7 @@ export const OrderHistory = ({ onViewOrder }: OrderHistoryProps) => {
   const [cancelDialog, setCancelDialog] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [addressCache, setAddressCache] = useState<{ [key: string]: string }>({});
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -51,6 +51,7 @@ export const OrderHistory = ({ onViewOrder }: OrderHistoryProps) => {
     { value: 'canceled', label: 'Canceled', icon: XCircle }
   ];
 
+  // Fetch order history
   const fetchOrderHistory = async () => {
     try {
       setIsLoading(true);
@@ -78,6 +79,58 @@ export const OrderHistory = ({ onViewOrder }: OrderHistoryProps) => {
       setIsLoading(false);
     }
   };
+
+  // Reverse geocode coordinates to address
+  const getAddress = async (latitude: number, longitude: number): Promise<string | undefined> => {
+    const cacheKey = `${latitude},${longitude}`;
+    if (addressCache[cacheKey]) {
+      return addressCache[cacheKey];
+    }
+
+    try {
+      const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18`
+      );
+      const data = await response.json();
+      const address = data.display_name || undefined;
+      if (address) {
+        setAddressCache((prev) => ({ ...prev, [cacheKey]: address }));
+      }
+      return address;
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+      return undefined;
+    }
+  };
+
+  // Fetch addresses for all orders
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      for (const order of orders) {
+        const [longitude, latitude] = order.location.coordinates;
+        if (!addressCache[`${latitude},${longitude}`]) {
+          const address = await getAddress(latitude, longitude);
+          if (address) {
+            setAddressCache((prev) => ({
+              ...prev,
+              [`${latitude},${longitude}`]: address
+            }));
+          }
+          // Respect Nominatim rate limit (1 request/second)
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+      }
+    };
+
+    if (orders.length > 0) {
+      fetchAddresses();
+    }
+  }, [orders]);
+
+  // Fetch orders on mount and status change
+  useEffect(() => {
+    fetchOrderHistory();
+  }, [selectedStatus]);
 
   const cancelOrder = async () => {
     if (!selectedOrderId) return;
@@ -121,13 +174,10 @@ export const OrderHistory = ({ onViewOrder }: OrderHistoryProps) => {
     setSelectedStatus(null);
   };
 
-  useEffect(() => {
-    fetchOrderHistory();
-  }, [selectedStatus]);
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return 'Invalid Date';
+  const formatDate = (id: string) => {
+    const timestamp = parseInt(id);
+    if (isNaN(timestamp)) return 'Invalid Date';
+    const date = new Date(timestamp);
     return new Intl.DateTimeFormat('en-US', {
       year: 'numeric',
       month: 'short',
@@ -191,7 +241,7 @@ export const OrderHistory = ({ onViewOrder }: OrderHistoryProps) => {
           {orders.length === 0 ? (
               <div className="py-8 sm:py-12 text-center">
                 <p className="text-gray-500 mb-4 text-sm sm:text-base">
-                  {selectedStatus ? `No ${selectedStatus} orders found.` : 'You haven\'t placed any orders yet.'}
+                  {selectedStatus ? `No ${selectedStatus} orders found.` : "You haven't placed any orders yet."}
                 </p>
                 <Button
                     onClick={() => window.location.reload()}
@@ -214,7 +264,7 @@ export const OrderHistory = ({ onViewOrder }: OrderHistoryProps) => {
                           </div>
                           <div className="flex items-center text-xs sm:text-sm text-gray-500 mt-1">
                             <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                            <span>{formatDate(order.createdAt)}</span>
+                            <span>{formatDate(order.id)}</span>
                           </div>
                         </div>
                         <div
@@ -244,12 +294,14 @@ export const OrderHistory = ({ onViewOrder }: OrderHistoryProps) => {
                         <div className="flex items-start">
                           <MapPin className="h-3 w-3 sm:h-4 sm:w-4 mr-2 mt-1 flex-shrink-0 text-[#FF4B3E]" />
                           <span>
-                      Delivered to: {order.location?.address || order.location.coordinates.join(', ')}
+                      Delivered to:{' '}
+                            {addressCache[`${order.location.coordinates[1]},${order.location.coordinates[0]}`] ||
+                                order.location.coordinates.join(', ')}
                     </span>
                         </div>
                         <div className="mt-1 flex items-start">
-                          <Clock className="h-3 w-3 sm:h-4 sm:w“What’s the issue with the provided code, and how does the updated code fix it?”4 mr-2 mt-1 flex-shrink-0 text-[#FF4B3E]" />
-                          <span>Items: {order.items.map(i => `${i.name} (x${i.quantity})`).join(', ')}</span>
+                          <Clock className="h-3 w-3 sm:h-4 sm:w-4 mr-2 mt-1 flex-shrink-0 text-[#FF4B3E]" />
+                          <span>Items: {order.items.map((i) => `${i.name} (x${i.quantity})`).join(', ')}</span>
                         </div>
                       </div>
 
@@ -312,3 +364,4 @@ export const OrderHistory = ({ onViewOrder }: OrderHistoryProps) => {
       </div>
   );
 };
+

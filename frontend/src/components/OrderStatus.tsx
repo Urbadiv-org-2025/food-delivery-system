@@ -6,9 +6,18 @@ import { useToast } from '@/hooks/use-toast';
 import { MapPin, Clock, AlertCircle, CheckCircle2, ChefHat, Package, XCircle } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { PaymentForm } from './PaymentForm';
+import Lottie from 'lottie-react';
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
+
+// Lottie animation JSONs (replace with actual URLs or local files from https://lottiefiles.com)
+import pendingAnimation from '@/animations/pending.json';
+import confirmedAnimation from '@/animations/confirmed.json';
+import preparingAnimation from '@/animations/preparing.json';
+import readyAnimation from '@/animations/ready.json';
+import deliveredAnimation from '@/animations/delivered.json';
+import canceledAnimation from '@/animations/canceled.json';
+import {PaymentForm} from "@/components/PaymentForm.tsx";
 
 interface OrderStatusProps {
   orderId: string;
@@ -34,9 +43,24 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
   const [order, setOrder] = useState<Order | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [cancelDialog, setCancelDialog] = useState(false);
+  const [address, setAddress] = useState<string | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  // Reverse geocode coordinates to address
+  const getAddress = async (latitude: number, longitude: number): Promise<string | null> => {
+    try {
+      const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=18`
+      );
+      const data = await response.json();
+      return data.display_name || null;
+    } catch (error) {
+      console.error('Reverse geocoding error:', error);
+      return null;
+    }
+  };
 
   const fetchOrder = async () => {
     try {
@@ -53,6 +77,10 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
         } else {
           setShowPayment(false);
         }
+        // Fetch address for coordinates
+        const [longitude, latitude] = response.data.location.coordinates;
+        const addr = await getAddress(latitude, longitude);
+        setAddress(addr || response.data.location.coordinates.join(', '));
       }
     } catch (error) {
       console.error('Error fetching order:', error);
@@ -99,7 +127,7 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
       transports: ['websocket'],
       upgrade: false,
       auth: {
-        token: localStorage.getItem('token') // Optional: for auth
+        token: localStorage.getItem('token')
       }
     });
 
@@ -107,7 +135,7 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
 
     socket.on('connect', () => {
       console.log('Socket.IO connected:', socket.id);
-      socket.emit('joinOrderRoom', `order:${orderId}`);
+      socket.emit('joinOrderRoom', orderId);
       console.log(`Emitted joinOrderRoom for order:${orderId}`);
     });
 
@@ -156,33 +184,41 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
 
   const getProgressValue = () => {
     const statusToProgress = {
-      'pending': 0,
-      'confirmed': 25,
-      'preparing': 50,
-      'ready': 75,
-      'delivered': 100,
-      'canceled': 0
+      pending: 0,
+      confirmed: 25,
+      preparing: 50,
+      ready: 75,
+      delivered: 100,
+      canceled: 0
     };
     return statusToProgress[order.status] || 0;
   };
 
-  const getStatusIcon = () => {
-    switch(order.status) {
-      case 'pending':
-        return <Clock className="h-6 w-6 text-yellow-500" />;
-      case 'confirmed':
-        return <CheckCircle2 className="h-6 w-6 text-blue-500" />;
-      case 'preparing':
-        return <ChefHat className="h-6 w-6 text-purple-500 animate-pulse" />;
-      case 'ready':
-        return <Package className="h-6 w-6 text-orange-500" />;
-      case 'delivered':
-        return <CheckCircle2 className="h-6 w-6 text-green-500" />;
-      case 'canceled':
-        return <XCircle className="h-6 w-6 text-red-500" />;
-      default:
-        return <Clock className="h-6 w-6 text-gray-500" />;
-    }
+  const getStatusAnimation = () => {
+    const animations = {
+      pending: pendingAnimation,
+      confirmed: confirmedAnimation,
+      preparing: preparingAnimation,
+      ready: readyAnimation,
+      delivered: deliveredAnimation,
+      canceled: canceledAnimation
+    };
+    return (
+        <Lottie
+            animationData={animations[order.status] || pendingAnimation}
+            loop={true}
+            className="h-16 w-16 mx-auto"
+        />
+    );
+  };
+
+  const statusMessages = {
+    pending: 'Waiting for confirmation...',
+    confirmed: 'Your order has been confirmed!',
+    preparing: 'Your food is being prepared...',
+    ready: 'Your food is ready for pickup!',
+    delivered: 'Your food has been delivered!',
+    canceled: 'Your order has been canceled.'
   };
 
   const statusColors = {
@@ -191,7 +227,7 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
     preparing: 'bg-purple-500',
     ready: 'bg-orange-500',
     delivered: 'bg-green-500',
-    canceled: 'bg-red-500',
+    canceled: 'bg-red-500'
   };
 
   return (
@@ -228,16 +264,11 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
               </div>
           )}
 
-          <div className="flex items-center justify-center py-4">
+          <div className="flex items-center justify-center py-4 w-full">
             <div className="text-center">
-              {getStatusIcon()}
-              <p className="mt-2 font-medium">
-                {order.status === 'preparing' && "Your food is being prepared..."}
-                {order.status === 'ready' && "Your food is ready for pickup!"}
-                {order.status === 'delivered' && "Your food has been delivered!"}
-                {order.status === 'confirmed' && "Your order has been confirmed!"}
-                {order.status === 'pending' && "Waiting for confirmation..."}
-                {order.status === 'canceled' && "Your order has been canceled."}
+              {getStatusAnimation()}
+              <p className="mt-2 font-medium text-sm sm:text-base">
+                {statusMessages[order.status]}
               </p>
             </div>
           </div>
@@ -257,14 +288,15 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
             </div>
             <div className="flex items-center text-sm text-gray-500">
               <MapPin className="mr-2 h-4 w-4" />
-              <span>Delivery Location: {order.location.coordinates.join(', ')}</span>
+              <span>Delivery Location: {address || order.location.coordinates.join(', ')}</span>
             </div>
           </div>
 
-          <div className="flex justify-between pt-4">
+          <div className="flex flex-col sm:flex-row justify-between pt-4 gap-2">
             <Button
                 variant="outline"
                 onClick={onPlaceNewOrder}
+                className="w-full sm:w-auto"
             >
               Place New Order
             </Button>
@@ -272,6 +304,7 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
                 <Button
                     variant="destructive"
                     onClick={() => setCancelDialog(true)}
+                    className="w-full sm:w-auto"
                 >
                   Cancel Order
                 </Button>
