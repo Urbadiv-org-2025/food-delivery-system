@@ -10,14 +10,14 @@ import Lottie from 'lottie-react';
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
 
-// Lottie animation JSONs (replace with actual URLs or local files from https://lottiefiles.com)
+// Lottie animation JSONs
 import pendingAnimation from '@/animations/pending.json';
 import confirmedAnimation from '@/animations/confirmed.json';
 import preparingAnimation from '@/animations/preparing.json';
 import readyAnimation from '@/animations/ready.json';
 import deliveredAnimation from '@/animations/delivered.json';
 import canceledAnimation from '@/animations/canceled.json';
-import {PaymentForm} from "@/components/PaymentForm.tsx";
+import { PaymentForm } from '@/components/PaymentForm.tsx';
 
 interface OrderStatusProps {
   orderId: string;
@@ -207,7 +207,7 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
         <Lottie
             animationData={animations[order.status] || pendingAnimation}
             loop={true}
-            className="h-16 w-16 mx-auto"
+            className="h-28 w-28 sm:h-32 sm:w-32 mx-auto"
         />
     );
   };
@@ -264,7 +264,7 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
               </div>
           )}
 
-          <div className="flex items-center justify-center py-4 w-full">
+          <div className="flex items-center justify-center py-6 w-full">
             <div className="text-center">
               {getStatusAnimation()}
               <p className="mt-2 font-medium text-sm sm:text-base">
