@@ -2,9 +2,14 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "@/context/AuthContext";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Navigate } from "react-router-dom";
 import Index from "./pages/Index";
+import VerifyRestaurantRegistration from "./components/verifyRestaurantRegistration";
+import ManageUsers from "./components/manageUsers";
+import AdminDashboard from "./pages/adminDashboard";
 import NotFound from "./pages/NotFound";
 import RestaurantDashboard from "./components/RestaurantDashboard";
 import RestaurantDetails from "./pages/RestaurantDetails";
@@ -15,6 +20,8 @@ import MenuDetails from "./pages/MenuItemDetails";
 import EditMenuItem from "./pages/EditMenuItem";
 import LandingPage from "./pages/LandingPage";
 import { ScrollToTop } from "./components/ScrollToTop";
+import DeliveryDashboard from "@/pages/DeliveryDashboard"; 
+import CustomerTrackingPage from "./pages/CustomerTrackingPage";
 
 const queryClient = new QueryClient();
 
@@ -39,6 +46,13 @@ const App = () => (
             <Route path="/restaurants/:restaurantId/menu/:id" element={<MenuDetails />} />
             <Route path="/restaurants/:restaurantId/menu/:id/edit" element={<EditMenuItem />} />
             <Route path="/admin-dashboard" element={<div>Admin Dashboard</div>} />
+            <Route path="/" element={<Index />} />
+            <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} />
+            <Route path="/restaurant_admin-dashboard" element={<div>Restaurant Dashboard</div>} />
+            <Route path="/admin-dashboard" element={<AdminDashboard/>} />
+            <Route path="/admin/restaurants" element={<VerifyRestaurantRegistration />} />
+            <Route path="/admin/profiles" element={<ManageUsers />} />
+            <Route path="/customer-tracking" element={<CustomerTrackingPage deliveryId={"456"} />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

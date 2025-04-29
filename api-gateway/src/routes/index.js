@@ -24,7 +24,50 @@ router.post("/users/register", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+router.get("/users", authenticate, restrictTo("admin"), async (req, res) => {
+  try {
+    const response = await axios.get("http://localhost:3001/api/users");
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
+router.delete(
+  "/users/:id",
+  authenticate,
+  restrictTo("admin"),
+  async (req, res) => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:3001/api/users/${req.params.id}`
+      );
+
+      res.json(response.data);
+    } catch (err) {
+      console.log("hit");
+
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.put(
+  "/users/:id",
+  authenticate,
+  restrictTo("admin"),
+  async (req, res) => {
+    try {
+      const response = await axios.put(
+        `http://localhost:3001/api/users/${req.params.id}`,
+        req.body
+      );
+      res.json(response.data);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
 router.post("/users/login", async (req, res) => {
   try {
     const response = await axios.post(
@@ -931,6 +974,186 @@ router.put(
       });
     } catch (err) {
       console.error("Error approving restaurant:", err);
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+// Delivery Management
+router.post(
+  "/deliveries",
+  authenticate,
+  restrictTo("customer", "delivery_personnel"),
+  async (req, res) => {
+    try {
+      await producer.connect();
+      const deliveryData = {
+        ...req.body,
+        orderId: req.body.orderId,
+        id: Date.now().toString(),
+      };
+      await producer.send({
+        topic: "delivery-events",
+        messages: [
+          { value: JSON.stringify({ action: "assign", data: deliveryData }) },
+        ],
+      });
+      await producer.disconnect();
+      res.status(201).json({ message: "Delivery assignment request sent" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.get(
+  "/deliveries/:id",
+  authenticate,
+  restrictTo("customer", "delivery_personnel"),
+  async (req, res) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3004/api/deliveries/${req.params.id}`
+      );
+      res.json(response.data);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.get(
+  "/deliveriesorder/:orderId",
+  authenticate,
+  restrictTo("customer", "delivery_personnel"),
+  async (req, res) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3004/api/deliveriesorder/${req.params.orderId}`
+      );
+      res.json(response.data);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.get(
+  "/deliveriesdriver/:driverId",
+  authenticate,
+  restrictTo("customer", "delivery_personnel"),
+  async (req, res) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3004/api/deliveriesdriver/${req.params.driverId}`
+      );
+      res.json(response.data);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.get(
+  "/deliveriesdriver/current/:driverId",
+  authenticate,
+  restrictTo("customer", "delivery_personnel"),
+  async (req, res) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:3004/api/deliveriesdriver/current/${req.params.driverId}`
+      );
+      res.json(response.data);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.put(
+  "/deliveries/:id/status",
+  authenticate,
+  restrictTo("delivery_personnel"),
+  async (req, res) => {
+    try {
+      await producer.connect();
+      const deliveryData = { id: req.params.id, status: req.body.status };
+      await producer.send({
+        topic: "delivery-events",
+        messages: [
+          {
+            value: JSON.stringify({
+              action: "update_status",
+              data: deliveryData,
+            }),
+          },
+        ],
+      });
+      await producer.disconnect();
+      res.json({ message: "Delivery status update request sent" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.post(
+  "/payments",
+  authenticate,
+  restrictTo("customer"),
+  async (req, res) => {
+    try {
+      console.log(req.body);
+      const response = await axios.post(
+        "http://localhost:3005/api/payments",
+        req.body
+      );
+      res.json(response.data);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.post(
+  "/refunds",
+  authenticate,
+  restrictTo("restaurant_admin", "admin"),
+  async (req, res) => {
+    try {
+      const response = await axios.post(
+        "http://localhost:3005/api/refunds",
+        req.body
+      );
+      res.json(response.data);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+router.post(
+  "/notifications",
+  authenticate,
+  restrictTo("admin"),
+  async (req, res) => {
+    try {
+      await producer.connect();
+      const notificationData = { ...req.body, id: Date.now().toString() };
+      await producer.send({
+        topic: "notification-events",
+        messages: [
+          {
+            value: JSON.stringify({
+              action: req.body.action,
+              data: notificationData,
+            }),
+          },
+        ],
+      });
+      await producer.disconnect();
+      res.status(201).json({ message: "Notification request sent" });
+    } catch (err) {
       res.status(500).json({ error: err.message });
     }
   }

@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, SignupData } from '@/types/user';
 import axios from 'axios';
+import { log } from 'console';
 
 interface AuthContextType {
   user: User | null;
@@ -35,8 +36,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signup = async (data: SignupData) => {
     try {
+      console.log("Hello from signup");
+      console.log(data);
       const response = await axios.post('http://localhost:3000/api/users/register', data);
-      window.location.href = '/app';
+      setUser(response.data.user);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      localStorage.setItem('token', response.data.token);
     } catch (error) {
       console.error('Signup error:', error);
       throw error;

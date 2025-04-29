@@ -4,6 +4,7 @@ const kafka = require('../config/kafka');
 const User = require('../models/User');
 const connectDB = require('../config/db');
 
+
 connectDB();
 
 const consumer = kafka.consumer({ groupId: 'user-group' });
@@ -46,4 +47,32 @@ const getUser = async (req, res) => {
   res.json(user);
 };
 
-module.exports = { runConsumer, login, getUser };
+
+const getAllUsers = async (req, res) => {
+  const users = await User.find().select('-password');
+  res.json(users);
+};
+
+const deleteUser = async (req, res) => {
+  const { id } = req.params;
+  console.log('id', id);
+
+  const user = await User.findOneAndDelete({ _id:id });
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json({ message: 'User deleted successfully' });
+};
+
+const editUser = async (req, res) => {
+  const { id } = req.params;
+  const updates = req.body;
+
+  if (updates.password) {
+    updates.password = await bcrypt.hash(updates.password, 10);
+  }
+
+  const user = await User.findOneAndUpdate({ _id: id }, updates, { new: true }).select('-password');
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json(user);
+};
+
+module.exports = { runConsumer, login, getUser, getAllUsers, deleteUser, editUser };
