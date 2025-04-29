@@ -4,6 +4,7 @@ const restaurantSchema = new mongoose.Schema({
   id: String,
   name: String,
   restaurantAdminId: { type: String, required: true },
+  adminAccept: { type: Boolean, default: false },
   location: {
     address: { type: String, required: true },
     latitude: { type: Number, required: true },

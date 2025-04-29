@@ -155,7 +155,8 @@ const runConsumer = async () => {
               const restaurant = new Restaurant({
                 id: restaurantData.id,
                 name: restaurantData.name,
-                restaurantAdminId: restaurantData.restaurantAdminId, // Add this field
+                restaurantAdminId: restaurantData.restaurantAdminId,
+                adminAccept: false, // Set default value
                 location: restaurantLocation,
                 cuisine: restaurantData.cuisine,
                 rating: restaurantData.rating || 0,
@@ -232,7 +233,9 @@ const runConsumer = async () => {
                 });
 
                 // Handle boolean available field separately
-                if (updateData.available !== undefined) {
+                if (typeof updateData.available === "boolean") {
+                  updateObject.available = updateData.available;
+                } else if (typeof updateData.available === "string") {
                   updateObject.available = updateData.available === "true";
                 }
 
@@ -276,6 +279,27 @@ const runConsumer = async () => {
                 `Restaurant availability updated: ${restaurantData.id}`
               );
               break;
+
+            case "admin_approve":
+              try {
+                const { id } = restaurantData;
+                const updatedRestaurant = await Restaurant.findOneAndUpdate(
+                  { id },
+                  { adminAccept: true },
+                  { new: true }
+                );
+
+                if (!updatedRestaurant) {
+                  console.error(`Restaurant not found with id: ${id}`);
+                  break;
+                }
+
+                console.log(`Restaurant approved: ${id}`);
+              } catch (error) {
+                console.error("Error in restaurant approval:", error);
+                console.error(error.stack);
+              }
+              break;
           }
         } catch (error) {
           console.error(`Error processing restaurant event: ${error.message}`);
@@ -293,6 +317,11 @@ const getRestaurantById = async (req, res) => {
     if (!restaurant) {
       return res.status(404).json({ error: "Restaurant not found" });
     }
+    if (!restaurant.adminAccept) {
+      return res
+        .status(403)
+        .json({ error: "Restaurant not yet approved by admin" });
+    }
     res.status(200).json({ data: restaurant });
   } catch (error) {
     console.error("Error fetching restaurant:", error);
@@ -302,7 +331,7 @@ const getRestaurantById = async (req, res) => {
 
 const getAllRestaurants = async (req, res) => {
   try {
-    const restaurants = await Restaurant.find();
+    const restaurants = await Restaurant.find({ adminAccept: true });
     res.status(200).json({ data: restaurants });
   } catch (error) {
     console.error("Error fetching restaurants:", error);
@@ -312,7 +341,10 @@ const getAllRestaurants = async (req, res) => {
 
 const getAvailableRestaurants = async (req, res) => {
   try {
-    const restaurants = await Restaurant.find({ available: true });
+    const restaurants = await Restaurant.find({
+      available: true,
+      adminAccept: true,
+    });
     res.json(restaurants);
   } catch (error) {
     res.status(500).json({ error: "Error fetching available restaurants" });
@@ -368,6 +400,8 @@ const getFilteredRestaurants = async (req, res) => {
       query.available = available === "true";
     }
 
+    query.adminAccept = true;
+
     let restaurants = await Restaurant.find(query);
 
     // If menu category is specified, filter restaurants that have menu items in that category
@@ -398,7 +432,6 @@ const getFilteredRestaurants = async (req, res) => {
   }
 };
 
-// Add the getNearbyRestaurants function
 const getNearbyRestaurants = async (req, res) => {
   try {
     const { latitude, longitude, maxDistance = 20 } = req.query;
@@ -415,7 +448,10 @@ const getNearbyRestaurants = async (req, res) => {
     };
 
     // Get all restaurants first
-    const allRestaurants = await Restaurant.find({ available: true });
+    const allRestaurants = await Restaurant.find({
+      available: true,
+      adminAccept: true,
+    });
 
     // Calculate distance for each restaurant and filter
     const nearbyRestaurants = allRestaurants
@@ -445,7 +481,10 @@ const getNearbyRestaurants = async (req, res) => {
 const getRestaurantsByAdminId = async (req, res) => {
   try {
     const { adminId } = req.params;
-    const restaurants = await Restaurant.find({ restaurantAdminId: adminId });
+    const restaurants = await Restaurant.find({
+      restaurantAdminId: adminId,
+      adminAccept: true,
+    });
     res.status(200).json({
       success: true,
       count: restaurants.length,

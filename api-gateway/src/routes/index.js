@@ -64,55 +64,59 @@ router.post(
         return res.status(400).json({ error: "Image file is required!" });
       }
 
-      // Parse ingredients if it's a string
+      // ✅ Parse ingredients if needed
       let ingredients = req.body.ingredients;
       if (typeof ingredients === "string") {
         try {
           ingredients = JSON.parse(ingredients);
         } catch (err) {
-          console.error("Error parsing ingredients:", err);
-          return res.status(400).json({
-            error: "Invalid ingredients format. Must be an array of strings.",
-          });
+          return res.status(400).json({ error: "Invalid ingredients format." });
         }
+      }
+
+      // ✅ Parse dietaryRestrictions if needed
+      let dietaryRestrictions = req.body.dietaryRestrictions;
+      if (typeof dietaryRestrictions === "string") {
+        try {
+          dietaryRestrictions = JSON.parse(dietaryRestrictions);
+        } catch (err) {
+          return res
+            .status(400)
+            .json({ error: "Invalid dietaryRestrictions format." });
+        }
+      }
+
+      // ✅ Validation
+      const validRestrictions = ["vegetarian", "vegan", "Non-Veg", "nut-free"];
+      if (
+        dietaryRestrictions.some(
+          (restriction) => !validRestrictions.includes(restriction)
+        )
+      ) {
+        return res
+          .status(400)
+          .json({ error: "Invalid dietary restriction value" });
       }
 
       await producer.connect();
       const menuData = {
         ...req.body,
-        restaurantId: req.user.id,
         id: Date.now().toString(),
         image: `/uploads/menu-items/${req.file.filename}`,
-        ingredients: ingredients, // Use the parsed ingredients
+        ingredients: ingredients,
+        dietaryRestrictions: dietaryRestrictions,
       };
 
-      // Add validation logging
       console.log("Creating menu item with data:", menuData);
 
-      // Ensure all required fields are present
       if (!menuData.name || !menuData.price || !menuData.category) {
-        return res.status(400).json({
-          error:
-            "Missing required fields: name, price, and category are required",
-        });
+        return res.status(400).json({ error: "Missing required fields." });
       }
 
-      // Add price validation
       if (isNaN(menuData.price) || menuData.price <= 0) {
-        return res.status(400).json({
-          error: "Price must be a positive number",
-        });
-      }
-
-      // Validate dietary restrictions
-      const validRestrictions = ["vegetarian", "vegan", "Non-Veg", "nut-free"];
-      if (
-        menuData.dietaryRestrictions &&
-        !validRestrictions.includes(menuData.dietaryRestrictions)
-      ) {
-        return res.status(400).json({
-          error: "Invalid dietary restriction value",
-        });
+        return res
+          .status(400)
+          .json({ error: "Price must be a positive number" });
       }
 
       await producer.send({
@@ -121,13 +125,13 @@ router.post(
           { value: JSON.stringify({ action: "create", data: menuData }) },
         ],
       });
+
       await producer.disconnect();
-      res.status(201).json({
-        message: "Menu item creation request sent",
-        data: menuData,
-      });
+      res
+        .status(201)
+        .json({ message: "Menu item creation request sent", data: menuData });
     } catch (err) {
-      console.error("Error in menu post route:", err);
+      console.error("Error creating menu item:", err);
       res.status(500).json({ error: err.message });
     }
   }
@@ -895,155 +899,38 @@ router.get("/restaurants", async (req, res) => {
   }
 });
 
-router.post(
-  "/orders/:id/cancel",
+// Add this new route after the restaurant routes
+router.put(
+  "/restaurants/:id/approve",
   authenticate,
-  restrictTo("restaurant_admin"),
+  restrictTo("admin"),
   async (req, res) => {
     try {
       await producer.connect();
-      const orderData = {
+      const approvalData = {
         id: req.params.id,
-        restaurantId: req.user.id,
-        email: req.body.customerEmail,
+        adminAccept: true,
       };
+
       await producer.send({
-        topic: "order-events",
+        topic: "restaurant-events",
         messages: [
-          { value: JSON.stringify({ action: "cancel", data: orderData }) },
+          {
+            value: JSON.stringify({
+              action: "admin_approve",
+              data: approvalData,
+            }),
+          },
         ],
       });
+
       await producer.disconnect();
-      res.json({ message: "Order cancellation request sent" });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
-
-router.post(
-  "/orders/:id/deliver",
-  authenticate,
-  restrictTo("delivery_personnel"),
-  async (req, res) => {
-    try {
-      await producer.connect();
-      const orderData = { id: req.params.id, email: req.body.customerEmail };
-      await producer.send({
-        topic: "order-events",
-        messages: [
-          { value: JSON.stringify({ action: "deliver", data: orderData }) },
-        ],
+      res.json({
+        message: "Restaurant approval request sent",
+        data: approvalData,
       });
-      await producer.disconnect();
-      res.json({ message: "Order delivery request sent" });
     } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
-
-router.get(
-  "/orders",
-  authenticate,
-  restrictTo("customer"),
-  async (req, res) => {
-    try {
-      const { status } = req.query;
-      const response = await axios.get("http://localhost:3003/api/orders", {
-        params: { customerId: req.user.id, status },
-      });
-      res.json(response.data);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
-
-router.post(
-  "/deliveries",
-  authenticate,
-  restrictTo("customer"),
-  async (req, res) => {
-    try {
-      await producer.connect();
-      const deliveryData = {
-        ...req.body,
-        orderId: req.body.orderId,
-        id: Date.now().toString(),
-      };
-      await producer.send({
-        topic: "delivery-events",
-        messages: [
-          { value: JSON.stringify({ action: "assign", data: deliveryData }) },
-        ],
-      });
-      await producer.disconnect();
-      res.status(201).json({ message: "Delivery assignment request sent" });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
-
-router.get(
-  "/deliveries/:id",
-  authenticate,
-  restrictTo("customer", "delivery_personnel"),
-  async (req, res) => {
-    try {
-      const response = await axios.get(
-        `http://localhost:3004/api/deliveries/${req.params.id}`
-      );
-      res.json(response.data);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
-
-router.post(
-  "/payments",
-  authenticate,
-  restrictTo("customer"),
-  async (req, res) => {
-    try {
-      const { amount, currency, orderId } = req.body;
-      if (!amount || !currency || !orderId) {
-        return res
-          .status(400)
-          .json({ error: "Amount, currency, and orderId required" });
-      }
-      const response = await axios.post("http://localhost:3005/api/payments", {
-        amount,
-        currency,
-        orderId,
-      });
-      res.json(response.data);
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
-
-router.post(
-  "/refunds",
-  authenticate,
-  restrictTo("restaurant_admin", "admin"),
-  async (req, res) => {
-    try {
-      const { paymentId, orderId } = req.body;
-      if (!paymentId || !orderId) {
-        return res
-          .status(400)
-          .json({ error: "Payment ID and orderId required" });
-      }
-      const response = await axios.post("http://localhost:3005/api/refunds", {
-        paymentId,
-        orderId,
-      });
-      res.json(response.data);
-    } catch (err) {
+      console.error("Error approving restaurant:", err);
       res.status(500).json({ error: err.message });
     }
   }

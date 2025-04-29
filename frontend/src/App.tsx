@@ -9,6 +9,10 @@ import NotFound from "./pages/NotFound";
 import RestaurantDashboard from "./components/RestaurantDashboard";
 import RestaurantDetails from "./pages/RestaurantDetails";
 import RestaurantEdit from './pages/EditRestaurant'; 
+import CreateRestaurant from "./pages/CreateRestaurant";
+import CreateMenuItem from "./pages/CreateMenuItem";
+import MenuDetails from "./pages/MenuItemDetails";
+import EditMenuItem from "./pages/EditMenuItem";
 import LandingPage from "./pages/LandingPage";
 import { ScrollToTop } from "./components/ScrollToTop";
 
@@ -30,6 +34,10 @@ const App = () => (
             <Route path="/restaurant_admin-dashboard" element={<RestaurantDashboard />} />
             <Route path="/restaurant/:id" element={<RestaurantDetails />} />
             <Route path="/restaurants/:id/edit" element={<RestaurantEdit />} />
+            <Route path="/restaurants/new" element={<CreateRestaurant />} />
+            <Route path="/restaurants/:id/menu/new" element={<CreateMenuItem />} />
+            <Route path="/restaurants/:restaurantId/menu/:id" element={<MenuDetails />} />
+            <Route path="/restaurants/:restaurantId/menu/:id/edit" element={<EditMenuItem />} />
             <Route path="/admin-dashboard" element={<div>Admin Dashboard</div>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

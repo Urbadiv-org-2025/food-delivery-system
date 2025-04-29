@@ -92,11 +92,13 @@ const EditRestaurant = () => {
     e.preventDefault();
     
     try {
-      // Restructure update data to match API expectations
+      // Log the current state before creating updateData
+      console.log('Current available state:', available);
+
       const updateData = {
         name,
         cuisine: selectedCuisine,
-        available,  // Send boolean directly instead of string
+        available: available, // Remove Boolean() conversion as it's already boolean
         openingHours,
         location: {
           address: location.address,
@@ -105,14 +107,16 @@ const EditRestaurant = () => {
         }
       };
 
+      // Log the update data before sending
+      console.log('Sending update data:', updateData);
+      
       const token = localStorage.getItem("token");
       
       toast({ title: "Updating", description: "Updating restaurant information..." });
       
-      // Send data directly without nesting in updateData object
       await axios.put(
-        `http://localhost:3000/api/restaurants/${id}`, 
-        updateData,  // Remove extra nesting
+        `http://localhost:3000/api/restaurants/${id}`, // Changed port to 3002
+        updateData,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
