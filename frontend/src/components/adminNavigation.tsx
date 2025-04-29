@@ -12,7 +12,8 @@ const AdminNavigation: React.FC = () => {
         logout();
         navigate('/');
     };
-
+    const user = localStorage.getItem('user');
+    const userEmail = user ? JSON.parse(user).email : "Guest";
     return (
         <nav className="bg-gray-800 text-white h-screen w-64 flex flex-col">
             <div className="p-4 text-lg font-bold border-b border-gray-700">
@@ -81,6 +82,9 @@ const AdminNavigation: React.FC = () => {
                 </li>
             </ul>
             <div className="p-4 border-t border-gray-700">
+                <div className="mb-2 text-sm text-gray-400">
+                    Logged in as: <span className="font-medium">{userEmail}</span>
+                </div>
                 <button
                     onClick={handleLogout}
                     className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded"

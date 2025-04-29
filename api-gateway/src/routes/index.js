@@ -33,8 +33,11 @@ router.get('/users', authenticate, restrictTo('admin'), async (req, res) => {
 router.delete('/users/:id', authenticate, restrictTo('admin'), async (req, res) => {
     try {
         const response = await axios.delete(`http://localhost:3001/api/users/${req.params.id}`);
+        
         res.json(response.data);
     } catch (err) {
+        console.log('hit');
+        
         res.status(500).json({ error: err.message });
     }
 });

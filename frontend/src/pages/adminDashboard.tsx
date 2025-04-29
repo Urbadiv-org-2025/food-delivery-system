@@ -2,6 +2,7 @@ import React from "react";
 import AdminNavigation from "../components/adminNavigation";
 
 const AdminDashboard: React.FC = () => {
+    
     return (
         <div className="flex">
             <AdminNavigation />

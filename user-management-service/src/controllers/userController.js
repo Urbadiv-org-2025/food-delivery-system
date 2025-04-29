@@ -54,25 +54,23 @@ const getAllUsers = async (req, res) => {
 };
 
 const deleteUser = async (req, res) => {
-  const { id } = req.body;
+  const { id } = req.params;
+  console.log('id', id);
 
-  if (id === req.user.id) {
-    return res.status(400).json({ error: "You cannot delete your own account" });
-  }
-
-  const user = await User.findOneAndDelete({ id });
+  const user = await User.findOneAndDelete({ _id:id });
   if (!user) return res.status(404).json({ error: 'User not found' });
   res.json({ message: 'User deleted successfully' });
 };
 
 const editUser = async (req, res) => {
-  const { id, ...updates } = req.body;
+  const { id } = req.params;
+  const updates = req.body;
 
   if (updates.password) {
     updates.password = await bcrypt.hash(updates.password, 10);
   }
 
-  const user = await User.findOneAndUpdate({ id }, updates, { new: true }).select('-password');
+  const user = await User.findOneAndUpdate({ _id: id }, updates, { new: true }).select('-password');
   if (!user) return res.status(404).json({ error: 'User not found' });
   res.json(user);
 };
