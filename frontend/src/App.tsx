@@ -23,6 +23,7 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import DeliveryDashboard from "@/pages/DeliveryDashboard"; 
 import CustomerTrackingPage from "./pages/CustomerTrackingPage";
 import ExploreRestaurants from "./pages/ExploreRestaurants";
+import RestaurantDetailsClient from "./pages/RestaurantDetailsClient";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/login" element={<Navigate to="/app" replace />} />
             <Route path="/restaurants/explore" element={<ExploreRestaurants />} />
             <Route path="/restaurant_admin-dashboard" element={<RestaurantDashboard />} />
+            <Route path="/restaurants/:id" element={<RestaurantDetailsClient />} />
             <Route path="/restaurant/:id" element={<RestaurantDetails />} />
             <Route path="/restaurants/:id/edit" element={<RestaurantEdit />} />
             <Route path="/restaurants/new" element={<CreateRestaurant />} />
