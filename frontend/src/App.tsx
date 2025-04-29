@@ -22,6 +22,7 @@ import LandingPage from "./pages/LandingPage";
 import { ScrollToTop } from "./components/ScrollToTop";
 import DeliveryDashboard from "@/pages/DeliveryDashboard"; 
 import CustomerTrackingPage from "./pages/CustomerTrackingPage";
+import ExploreRestaurants from "./pages/ExploreRestaurants";
 
 const queryClient = new QueryClient();
 
@@ -37,7 +38,7 @@ const App = () => (
             <Route path="/" element={<LandingPage />} />
             <Route path="/app" element={<Index />} />
             <Route path="/login" element={<Navigate to="/app" replace />} />
-            <Route path="/delivery_personnel-dashboard" element={<div>Delivery Dashboard</div>} />
+            <Route path="/restaurants/explore" element={<ExploreRestaurants />} />
             <Route path="/restaurant_admin-dashboard" element={<RestaurantDashboard />} />
             <Route path="/restaurant/:id" element={<RestaurantDetails />} />
             <Route path="/restaurants/:id/edit" element={<RestaurantEdit />} />
@@ -45,9 +46,8 @@ const App = () => (
             <Route path="/restaurants/:id/menu/new" element={<CreateMenuItem />} />
             <Route path="/restaurants/:restaurantId/menu/:id" element={<MenuDetails />} />
             <Route path="/restaurants/:restaurantId/menu/:id/edit" element={<EditMenuItem />} />
-            <Route path="/admin-dashboard" element={<div>Admin Dashboard</div>} />
-            <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} /> 
-            <Route path="/admin-dashboard" element={<AdminDashboard/>} />
+            <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/admin/restaurants" element={<VerifyRestaurantRegistration />} />
             <Route path="/admin/profiles" element={<ManageUsers />} />
             <Route path="/customer-tracking" element={<CustomerTrackingPage deliveryId={"456"} />} />
