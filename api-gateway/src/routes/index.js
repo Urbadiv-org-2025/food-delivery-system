@@ -487,7 +487,7 @@ router.post(
   async (req, res) => {
     try {
       await producer.connect();
-      const orderData = { id: req.params.id, restaurantId: req.user.id };
+      const orderData = { id: req.params.id, restaurantId: req.user.id, longitude: req.body.longitude , latitude: req.body.latitude};
       await producer.send({
         topic: "order-events",
         messages: [

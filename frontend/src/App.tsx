@@ -37,7 +37,7 @@ const App = () => (
             <Route path="/" element={<LandingPage />} />
             <Route path="/app" element={<Index />} />
             <Route path="/login" element={<Navigate to="/app" replace />} />
-            <Route path="/delivery_personnel-dashboard" element={<div>Delivery Dashboard</div>} />
+            {/* <Route path="/delivery_personnel-dashboard" element={<div>Delivery Dashboard</div>} /> */}
             <Route path="/restaurant_admin-dashboard" element={<RestaurantDashboard />} />
             <Route path="/restaurant/:id" element={<RestaurantDetails />} />
             <Route path="/restaurants/:id/edit" element={<RestaurantEdit />} />
@@ -50,7 +50,7 @@ const App = () => (
             <Route path="/admin-dashboard" element={<AdminDashboard/>} />
             <Route path="/admin/restaurants" element={<VerifyRestaurantRegistration />} />
             <Route path="/admin/profiles" element={<ManageUsers />} />
-            <Route path="/customer-tracking" element={<CustomerTrackingPage deliveryId={"456"} />} />
+            <Route path="/customer-tracking/:deliveryId" element={<CustomerTrackingPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
