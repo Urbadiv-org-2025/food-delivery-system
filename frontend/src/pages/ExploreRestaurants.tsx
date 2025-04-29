@@ -70,15 +70,15 @@ const ExploreRestaurants = () => {
             r.location?.latitude || 0,
             r.location?.longitude || 0
           );
-          return distance <= 5; // 5km
+          return distance <= 20; // Changed from 5km to 20km
         });
 
         setFilteredRestaurants(nearby);
 
         if (nearby.length === 0) {
-          toast({ title: "No Restaurants Nearby", description: "No restaurants found within 5km.", variant: "destructive" });
+          toast({ title: "No Restaurants Nearby", description: "No restaurants found within 20km.", variant: "destructive" });
         } else {
-          toast({ title: "Nearby Restaurants", description: `Found ${nearby.length} nearby.` });
+          toast({ title: "Nearby Restaurants", description: `Found ${nearby.length} restaurants within 20km.` });
         }
       },
       () => {

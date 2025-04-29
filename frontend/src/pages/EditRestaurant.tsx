@@ -92,62 +92,35 @@ const EditRestaurant = () => {
     e.preventDefault();
     
     try {
-      // Log the current state before creating updateData
-      console.log('Current available state:', available);
-
-      const updateData = {
-        name,
-        cuisine: selectedCuisine,
-        available: available, // Remove Boolean() conversion as it's already boolean
-        openingHours,
-        location: {
-          address: location.address,
-          latitude: location.latitude.toString(),
-          longitude: location.longitude.toString()
-        }
-      };
-
-      // Log the update data before sending
-      console.log('Sending update data:', updateData);
-      
       const token = localStorage.getItem("token");
+      setIsLoading(true);
       
       toast({ title: "Updating", description: "Updating restaurant information..." });
+
+      const formData = new FormData();
+      formData.append("name", name);
+      formData.append("cuisine", selectedCuisine);
+      formData.append("available", available.toString());
+      formData.append("openingHours", openingHours);
+      formData.append("location.address", location.address);
+      formData.append("location.latitude", location.latitude.toString());
+      formData.append("location.longitude", location.longitude.toString());
       
+      if (image) {
+        formData.append("image", image);
+      }
+
       await axios.put(
-        `http://localhost:3000/api/restaurants/${id}`, // Changed port to 3002
-        updateData,
+        `http://localhost:3000/api/restaurants/${id}`,
+        formData,
         {
           headers: { 
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            "Content-Type": "multipart/form-data"
           },
-          timeout: 10000
+          timeout: 15000
         }
       );
-
-      // Handle file upload separately if there's an image
-      if (image) {
-        const formData = new FormData();
-        formData.append("image", image);
-        await axios.put(
-          `http://localhost:3002/api/restaurant/${id}/image`,
-          formData,
-          {
-            headers: { 
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'multipart/form-data'
-            },
-            timeout: 15000, // Longer timeout for image upload
-            onUploadProgress: (progressEvent) => {
-              const percentCompleted = Math.round(
-                (progressEvent.loaded * 100) / (progressEvent.total || 1)
-              );
-              console.log(`Upload progress: ${percentCompleted}%`);
-            }
-          }
-        );
-      }
 
       toast({ title: "Success", description: "Restaurant updated successfully!" });
       navigate(`/restaurant/${id}`);
@@ -158,6 +131,8 @@ const EditRestaurant = () => {
         description: "Failed to update restaurant. Please try again.", 
         variant: "destructive" 
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
