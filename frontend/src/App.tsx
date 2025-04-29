@@ -46,9 +46,7 @@ const App = () => (
             <Route path="/restaurants/:restaurantId/menu/:id" element={<MenuDetails />} />
             <Route path="/restaurants/:restaurantId/menu/:id/edit" element={<EditMenuItem />} />
             <Route path="/admin-dashboard" element={<div>Admin Dashboard</div>} />
-            <Route path="/" element={<Index />} />
-            <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} />
-            <Route path="/restaurant_admin-dashboard" element={<div>Restaurant Dashboard</div>} />
+            <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} /> 
             <Route path="/admin-dashboard" element={<AdminDashboard/>} />
             <Route path="/admin/restaurants" element={<VerifyRestaurantRegistration />} />
             <Route path="/admin/profiles" element={<ManageUsers />} />
