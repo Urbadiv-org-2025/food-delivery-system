@@ -6,9 +6,11 @@ const socket = io("http://localhost:3004"); // Your server URL
 
 const CustomerTrackingPage = ({ deliveryId }: { deliveryId: string }) => {
   const token = localStorage.getItem("token"); // Retrieve the token string directly
+
   const [driverLocation, setDriverLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [stopLocation, setStopLocation] = useState<{ latitude: number; longitude: number } | null>(null); // New
+  const [stopLocation, setStopLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [endLocation, setEndLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [status, setStatus] = useState<string | null>(null); // Track delivery status
 
   console.log("CustomerTrackingPage deliveryId:", deliveryId);
 
@@ -23,8 +25,13 @@ const CustomerTrackingPage = ({ deliveryId }: { deliveryId: string }) => {
           });
           if (response.ok) {
             const data = await response.json();
-            setEndLocation(data.endLocation); // End location
-            setStopLocation(data.startLocation || null); // Optional stop location
+            setEndLocation(data.endLocation);
+            setStatus(data.status); // Save delivery status
+            if (data.status === "assigned") {
+              setStopLocation(data.startLocation || null);
+            } else {
+              setStopLocation(null);
+            }
           } else {
             console.error("Failed to fetch locations:", response.statusText);
           }
@@ -53,8 +60,8 @@ const CustomerTrackingPage = ({ deliveryId }: { deliveryId: string }) => {
         {driverLocation && endLocation ? (
           <DeliveryMap
             startLocation={driverLocation}
-            stopLocation={stopLocation} // Pass stop location
             endLocation={endLocation}
+            {...(status === "assigned" && stopLocation ? { stopLocation } : {})}
             className="border-2 border-gray-200 shadow-sm"
           />
         ) : (

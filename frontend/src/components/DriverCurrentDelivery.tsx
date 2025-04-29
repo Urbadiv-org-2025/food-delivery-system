@@ -57,9 +57,9 @@ const DriverCurrentDelivery = () => {
       );
       return response.data;
     },
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["currentDelivery", driverId] });
-
+    onSuccess: async (data, variables) => {
+      await queryClient.refetchQueries({ queryKey: ["currentDelivery", driverId] });
+    
       const message = variables === "in_transit" 
         ? "Delivery started successfully! Drive safely." 
         : "Delivery completed successfully!";
@@ -109,7 +109,7 @@ const DriverCurrentDelivery = () => {
       {
         enableHighAccuracy: true,
         maximumAge: 10000,
-        timeout: 5000,
+        timeout: 1000,
       }
     );
 
