@@ -21,10 +21,12 @@ const Index = () => {
   const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState({
+    name: "",
     cuisine: "",
     available: "",
     menuCategory: "",
   });
+  
 
   const fetchRestaurants = async (customUrl?: string) => {
     try {
