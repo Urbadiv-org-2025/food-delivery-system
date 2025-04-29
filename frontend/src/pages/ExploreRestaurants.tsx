@@ -19,8 +19,8 @@ const ExploreRestaurants = () => {
   const navigate = useNavigate();
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
   const [loading, setLoading] = useState(true);
-
   const [filters, setFilters] = useState({
+    name: "",
     cuisine: "",
     available: "",
     menuCategory: "",
@@ -28,8 +28,12 @@ const ExploreRestaurants = () => {
 
   const fetchRestaurants = async (customUrl?: string) => {
     try {
-      const url = customUrl || `http://localhost:3002/api/restaurants`;
-      const res = await fetch(`${url}?${new URLSearchParams(filters as any)}`);
+      setLoading(true);
+      let url = customUrl 
+        ? customUrl 
+        : `http://localhost:3002/api/restaurants?${new URLSearchParams(filters as any)}`;
+      
+      const res = await fetch(url);
       const data = await res.json();
       setRestaurants(data.data || []);
     } catch (error) {
@@ -69,29 +73,44 @@ const ExploreRestaurants = () => {
           <Button onClick={() => { logout(); window.location.href = "/"; }}>Sign Out</Button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Input placeholder="Search by name" onChange={e => setFilters(prev => ({ ...prev, name: e.target.value }))} />
-          <Select onValueChange={(val) => setFilters(prev => ({ ...prev, cuisine: val }))}>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+          <Input
+            placeholder="Search by name"
+            onChange={(e) => setFilters((prev) => ({ ...prev, name: e.target.value }))}
+          />
+          <Select onValueChange={(val) => setFilters((prev) => ({ ...prev, cuisine: val }))}>
             <SelectTrigger><SelectValue placeholder="Cuisine" /></SelectTrigger>
             <SelectContent>
-              {cuisineOptions.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              {cuisineOptions.map((cuisine) => (
+                <SelectItem key={cuisine} value={cuisine}>{cuisine}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          <Select onValueChange={(val) => setFilters(prev => ({ ...prev, available: val }))}>
+          <Select onValueChange={(val) => setFilters((prev) => ({ ...prev, available: val === "all" ? "" : val }))}>
             <SelectTrigger><SelectValue placeholder="Availability" /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               <SelectItem value="true">Available</SelectItem>
               <SelectItem value="false">Closed</SelectItem>
             </SelectContent>
           </Select>
-          <Select onValueChange={(val) => setFilters(prev => ({ ...prev, menuCategory: val }))}>
+          <Select onValueChange={(val) => setFilters((prev) => ({ ...prev, menuCategory: val }))}>
             <SelectTrigger><SelectValue placeholder="Menu Category" /></SelectTrigger>
             <SelectContent>
-              {categoryOptions.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+              {categoryOptions.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
-          <Button onClick={handleLocation} className="col-span-1 md:col-span-4 mt-2">Use My Location</Button>
+
+          {/* Location Button */}
+          <Button
+            onClick={handleLocation}
+            className="h-10 mt-1 bg-blue-500 hover:bg-blue-600 text-white"
+            variant="default"
+          >
+            Use My Location
+          </Button>
         </div>
 
         {loading ? (
@@ -117,7 +136,9 @@ const ExploreRestaurants = () => {
                   <h3 className="text-lg font-bold">{restaurant.name}</h3>
                   <p className="text-muted-foreground text-sm">{restaurant.cuisine}</p>
                   <p className="text-xs text-gray-500">{restaurant.location?.address}</p>
-                  <div className="text-sm font-medium">⭐ {restaurant.rating?.toFixed(1) || 'N/A'} • {restaurant.available ? 'Open' : 'Closed'}</div>
+                  <div className="text-sm font-medium">
+                    ⭐ {restaurant.rating?.toFixed(1) || "N/A"} • {restaurant.available ? "Open" : "Closed"}
+                  </div>
                 </div>
               </div>
             ))}
