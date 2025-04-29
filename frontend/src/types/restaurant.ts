@@ -2,6 +2,8 @@ export interface Location {
   latitude: number;
   longitude: number;
   address: string;
+  city?: string;        
+  region?: string;
 }
 
 export interface Restaurant {
@@ -14,6 +16,7 @@ export interface Restaurant {
   available: boolean;
   restaurantAdminId: string;
   rating: number;
+  openingHours?: string;
 }
 
 export interface MenuItem {

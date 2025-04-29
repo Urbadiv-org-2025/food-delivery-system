@@ -56,7 +56,7 @@ const RestaurantDetailsClient = () => {
   if (!restaurant) return <div className="text-center text-red-500">Restaurant not found</div>;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-8">
+    <div className="p-6 max-w-7xl mx-auto space-y-8">
       {/* Hero */}
       <div className="rounded-xl overflow-hidden h-[300px]">
         <img
@@ -68,12 +68,46 @@ const RestaurantDetailsClient = () => {
 
       {/* Header Info */}
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold">{restaurant.name}</h1>
+        <h1 className="text-4xl font-bold">{restaurant.name}</h1>
         <p className="text-gray-600">{restaurant.location?.address}</p>
         <Badge variant={restaurant.available ? "default" : "secondary"}>
           {restaurant.available ? "Open" : "Closed"}
         </Badge>
       </div>
+
+     {/* Map & Info Section */}
+<div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+  {/* Map */}
+  <div className="md:col-span-2 h-56 rounded-lg overflow-hidden relative">
+    <iframe
+      src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyAjt-GCTto9WtDApGDNMGD1wkppIli-pHA&q=${restaurant.location?.latitude},${restaurant.location?.longitude}&zoom=14`}
+      width="100%"
+      height="100%"
+      allowFullScreen
+      className="border-0 w-full h-full"
+      loading="lazy"
+      style={{
+        filter: "grayscale(20%) contrast(90%) brightness(95%)",
+      }}
+    />
+  </div>
+
+  {/* Info box */}
+  <div className="bg-white rounded-lg shadow p-6 flex flex-col justify-between h-56">
+    <div>
+      <p className="text-sm text-gray-500 font-semibold mb-1">📍 Address</p>
+      <p className="text-base font-medium">{restaurant.location?.address}</p>
+      <p className="text-sm text-gray-400">{restaurant.location?.city}, {restaurant.location?.region}</p>
+    </div>
+    <div>
+      <p className="text-sm text-gray-500 font-semibold mb-1">🕒 Hours</p>
+      <p className="text-base font-medium">{restaurant.available ? "Open Now" : "Closed"}</p>
+      <p className="text-sm text-gray-400">Open until {restaurant.openingHours || "10:00 PM"}</p>
+    </div>
+  </div>
+</div>
+
+
 
       {/* Filters */}
       <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
