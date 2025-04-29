@@ -15,7 +15,7 @@ const RestaurantAdminNavigation: React.FC = () => {
   };
 
   return (
-    <nav className="bg-gray-800 text-white h-screen w-64 flex flex-col">
+    <nav className="bg-gray-800 text-white min-h-screen w-64 flex flex-col sticky top-0">
       <div className="p-4 text-lg font-bold border-b border-gray-700">
         Restaurant Admin
       </div>

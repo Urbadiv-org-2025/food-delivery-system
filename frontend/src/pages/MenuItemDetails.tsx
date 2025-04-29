@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
 import { MenuItem } from "@/types/restaurant";
+import RestaurantAdminNavigation from "@/components/RestaurantAdminNavigation";
 
 const MenuDetails = () => {
   const { id } = useParams<{ id: string }>();  // this is menuId!
@@ -83,59 +84,71 @@ const MenuDetails = () => {
     }
   };
 
-  if (loading) return <div className="p-6 text-center">Loading menu item...</div>;
+  if (loading) {
+    return (
+      <div className="flex">
+        <RestaurantAdminNavigation />
+        <div className="flex-1 p-8 text-center">Loading menu item...</div>
+      </div>
+    );
+  }
 
   if (!menuItem) return <div className="p-6 text-center text-red-500">Menu item not found.</div>;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      {/* Big image */}
-      <div className="aspect-video rounded-lg overflow-hidden">
-        <img
-          src={`http://localhost:3000${menuItem.image}`}
-          alt={menuItem.name}
-          className="object-cover w-full h-full"
-        />
-      </div>
+    <div className="flex">
+      <RestaurantAdminNavigation />
+      <div className="flex-1 p-8">
+        <div className="p-6 max-w-4xl mx-auto space-y-6">
+          {/* Big image */}
+          <div className="aspect-video rounded-lg overflow-hidden">
+            <img
+              src={`http://localhost:3000${menuItem.image}`}
+              alt={menuItem.name}
+              className="object-cover w-full h-full"
+            />
+          </div>
 
-      {/* Details */}
-      <div className="space-y-4">
-        <h2 className="text-3xl font-bold">{menuItem.name}</h2>
-        <p className="text-muted-foreground text-lg">{menuItem.description}</p>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="default">{menuItem.category}</Badge>
-          {menuItem.available ? (
-            <Badge variant="default">Available</Badge>
-          ) : (
-            <Badge variant="secondary">Not Available</Badge>
-          )}
-        </div>
-        <p className="text-xl font-bold">{menuItem.price} LKR</p>
+          {/* Details */}
+          <div className="space-y-4">
+            <h2 className="text-3xl font-bold">{menuItem.name}</h2>
+            <p className="text-muted-foreground text-lg">{menuItem.description}</p>
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="default">{menuItem.category}</Badge>
+              {menuItem.available ? (
+                <Badge variant="default">Available</Badge>
+              ) : (
+                <Badge variant="secondary">Not Available</Badge>
+              )}
+            </div>
+            <p className="text-xl font-bold">{menuItem.price} LKR</p>
 
-        {/* Ingredients */}
-        <div>
-          <h4 className="text-lg font-semibold">Ingredients:</h4>
-          <ul className="list-disc list-inside text-muted-foreground">
-            {menuItem.ingredients.map((ing, index) => (
-              <li key={index}>{ing}</li>
-            ))}
-          </ul>
-        </div>
+            {/* Ingredients */}
+            <div>
+              <h4 className="text-lg font-semibold">Ingredients:</h4>
+              <ul className="list-disc list-inside text-muted-foreground">
+                {menuItem.ingredients.map((ing, index) => (
+                  <li key={index}>{ing}</li>
+                ))}
+              </ul>
+            </div>
 
-        {/* Dietary Restrictions */}
-        <div>
-          <h4 className="text-lg font-semibold">Dietary Restrictions:</h4>
-          <ul className="list-disc list-inside text-muted-foreground">
-            {menuItem.dietaryRestrictions.map((d, index) => (
-              <li key={index}>{d}</li>
-            ))}
-          </ul>
-        </div>
+            {/* Dietary Restrictions */}
+            <div>
+              <h4 className="text-lg font-semibold">Dietary Restrictions:</h4>
+              <ul className="list-disc list-inside text-muted-foreground">
+                {menuItem.dietaryRestrictions.map((d, index) => (
+                  <li key={index}>{d}</li>
+                ))}
+              </ul>
+            </div>
 
-        {/* Actions */}
-        <div className="flex gap-4 mt-6">
-          <Button onClick={() => navigate(`/restaurants/${menuItem.restaurantId}/menu/${menuItem.id}/edit`)}>Edit</Button>
-          <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+            {/* Actions */}
+            <div className="flex gap-4 mt-6">
+              <Button onClick={() => navigate(`/restaurants/${menuItem.restaurantId}/menu/${menuItem.id}/edit`)}>Edit</Button>
+              <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

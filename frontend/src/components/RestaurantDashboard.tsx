@@ -2,7 +2,7 @@ import { useAuth } from "@/context/AuthContext";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useRestaurants } from "@/hooks/use-restaurants";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, LogOut } from "lucide-react";
+import { PlusCircle } from "lucide-react";
 import { RestaurantCard } from "./restaurants/RestaurantCard";
 import RestaurantAdminNavigation from "@/components/RestaurantAdminNavigation";
 
@@ -41,10 +41,7 @@ const RestaurantDashboard = () => {
                 <PlusCircle className="w-4 h-4 mr-2" />
                 New Restaurant
               </Button>
-              <Button variant="outline" onClick={handleLogout} className="gap-2">
-                <LogOut className="w-4 h-4" />
-                Logout
-              </Button>
+              
             </div>
           </div>
 

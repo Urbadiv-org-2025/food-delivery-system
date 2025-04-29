@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
+import RestaurantAdminNavigation from "@/components/RestaurantAdminNavigation";
 
 const categoryOptions = ["appetizer", "main-course", "dessert", "beverage"];
 const dietaryOptions = ["vegetarian", "vegan", "Non-Veg", "nut-free"];
@@ -96,112 +97,115 @@ const CreateMenuItem = () => {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
-      <h2 className="text-2xl font-bold mb-4">Create New Menu Item</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="flex">
+      <RestaurantAdminNavigation />
+      <div className="flex-1 p-8">
+        <h2 className="text-2xl font-bold mb-4">Create New Menu Item</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
 
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Item Name"
-          required
-        />
-
-        <Input
-          type="number"
-          value={price}
-          onChange={(e) => setPrice(e.target.value === "" ? "" : parseFloat(e.target.value))}
-          placeholder="Price (LKR)"
-          required
-        />
-
-        <Textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Short description"
-          rows={3}
-        />
-
-        <div className="space-y-2">
-          <label>Category</label>
-          <Select value={category} onValueChange={setCategory}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Category" />
-            </SelectTrigger>
-            <SelectContent>
-              {categoryOptions.map((cat) => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <label>Availability</label>
-          <div className="flex items-center space-x-2">
-            <Switch checked={available} onCheckedChange={setAvailable} />
-            <span>{available ? "Available" : "Not Available"}</span>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label>Ingredients</label>
-          <div className="flex gap-2">
-            <Input
-              value={newIngredient}
-              onChange={(e) => setNewIngredient(e.target.value)}
-              placeholder="Enter an ingredient"
-            />
-            <Button type="button" onClick={handleAddIngredient}>Add</Button>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {ingredients.map((ingredient, idx) => (
-              <span
-                key={idx}
-                className="bg-gray-200 px-2 py-1 rounded cursor-pointer text-sm"
-                onClick={() => handleRemoveIngredient(idx)}
-              >
-                {ingredient} ×
-              </span>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label>Dietary Restrictions</label>
-          <div className="flex flex-wrap gap-2">
-            {dietaryOptions.map((option) => (
-              <Button
-                key={option}
-                type="button"
-                variant={dietaryRestrictions.includes(option) ? "default" : "outline"}
-                onClick={() => handleToggleDietary(option)}
-                className="text-xs"
-              >
-                {option}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label>Upload Item Image</label>
           <Input
-            type="file"
-            onChange={(e) => setImage(e.target.files?.[0] || null)}
-            accept="image/*"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Item Name"
             required
           />
-        </div>
 
-        <Button
-          type="submit"
-          className="bg-[#FF4B3E] hover:bg-[#FF6B5E] w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? "Creating..." : "Create Menu Item"}
-        </Button>
-      </form>
+          <Input
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(e.target.value === "" ? "" : parseFloat(e.target.value))}
+            placeholder="Price (LKR)"
+            required
+          />
+
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Short description"
+            rows={3}
+          />
+
+          <div className="space-y-2">
+            <label>Category</label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {categoryOptions.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <label>Availability</label>
+            <div className="flex items-center space-x-2">
+              <Switch checked={available} onCheckedChange={setAvailable} />
+              <span>{available ? "Available" : "Not Available"}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label>Ingredients</label>
+            <div className="flex gap-2">
+              <Input
+                value={newIngredient}
+                onChange={(e) => setNewIngredient(e.target.value)}
+                placeholder="Enter an ingredient"
+              />
+              <Button type="button" onClick={handleAddIngredient}>Add</Button>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {ingredients.map((ingredient, idx) => (
+                <span
+                  key={idx}
+                  className="bg-gray-200 px-2 py-1 rounded cursor-pointer text-sm"
+                  onClick={() => handleRemoveIngredient(idx)}
+                >
+                  {ingredient} ×
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label>Dietary Restrictions</label>
+            <div className="flex flex-wrap gap-2">
+              {dietaryOptions.map((option) => (
+                <Button
+                  key={option}
+                  type="button"
+                  variant={dietaryRestrictions.includes(option) ? "default" : "outline"}
+                  onClick={() => handleToggleDietary(option)}
+                  className="text-xs"
+                >
+                  {option}
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label>Upload Item Image</label>
+            <Input
+              type="file"
+              onChange={(e) => setImage(e.target.files?.[0] || null)}
+              accept="image/*"
+              required
+            />
+          </div>
+
+          <Button
+            type="submit"
+            className="bg-[#FF4B3E] hover:bg-[#FF6B5E] w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? "Creating..." : "Create Menu Item"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };
