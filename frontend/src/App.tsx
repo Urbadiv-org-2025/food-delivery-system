@@ -25,6 +25,7 @@ import CustomerTrackingPage from "./pages/CustomerTrackingPage";
 import ExploreRestaurants from "./pages/ExploreRestaurants";
 import RestaurantDetailsClient from "./pages/RestaurantDetailsClient";
 import RestaurantMenus from "./pages/RestaurantMenus";
+import RestaurantOrders from "./pages/RestaurantOrders";
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/restaurants/:id/menu/new" element={<CreateMenuItem />} />
             <Route path="/restaurants/:restaurantId/menu/:id" element={<MenuDetails />} />
             <Route path="/restaurant/menus" element={<RestaurantMenus />} />
+            <Route path="/restaurant/orders" element={<RestaurantOrders />} />
             <Route path="/restaurants/:restaurantId/menu/:id/edit" element={<EditMenuItem />} />
             <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />

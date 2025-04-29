@@ -22,7 +22,7 @@ const RestaurantAdminNavigation: React.FC = () => {
       <ul className="flex-1">
         <li>
           <NavLink
-            to="/restaurant-dashboard"
+            to="/restaurant_admin-dashboard"
             className={({ isActive }) =>
               `block px-4 py-2 hover:bg-gray-700 ${
                 isActive ? "bg-gray-700" : ""
