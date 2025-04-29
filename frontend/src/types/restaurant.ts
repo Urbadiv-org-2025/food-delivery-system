@@ -13,6 +13,7 @@ export interface Restaurant {
   location: Location;
   available: boolean;
   restaurantAdminId: string;
+  rating: number;
 }
 
 export interface MenuItem {
