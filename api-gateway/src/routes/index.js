@@ -279,7 +279,8 @@ router.get('/orders', authenticate, restrictTo('customer'), async (req, res) => 
     }
 });
 
-router.post('/deliveries', authenticate, restrictTo('customer'), async (req, res) => {
+// Delivery Management
+router.post('/deliveries', authenticate, restrictTo('customer', 'delivery_personnel'), async (req, res) => {
     try {
         await producer.connect();
         const deliveryData = { ...req.body, orderId: req.body.orderId, id: Date.now().toString() };
@@ -298,6 +299,50 @@ router.get('/deliveries/:id', authenticate, restrictTo('customer', 'delivery_per
     try {
         const response = await axios.get(`http://localhost:3004/api/deliveries/${req.params.id}`);
         res.json(response.data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/deliveriesorder/:orderId', authenticate, restrictTo('customer', 'delivery_personnel'), async (req, res) => {
+    try {   
+        const response = await axios.get(`http://localhost:3004/api/deliveriesorder/${req.params.orderId}`);
+        res.json(response.data);
+    }
+    catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+}
+);
+
+router.get('/deliveriesdriver/:driverId', authenticate, restrictTo('customer', 'delivery_personnel'), async (req, res) => {
+    try {
+        const response = await axios.get(`http://localhost:3004/api/deliveriesdriver/${req.params.driverId}`);
+        res.json(response.data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.get('/deliveriesdriver/current/:driverId', authenticate, restrictTo('customer', 'delivery_personnel'), async (req, res) => {
+    try {
+        const response = await axios.get(`http://localhost:3004/api/deliveriesdriver/current/${req.params.driverId}`);
+        res.json(response.data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.put('/deliveries/:id/status', authenticate, restrictTo('delivery_personnel'), async (req, res) => {
+    try {
+        await producer.connect();
+        const deliveryData = { id: req.params.id, status: req.body.status };
+        await producer.send({
+            topic: 'delivery-events',
+            messages: [{ value: JSON.stringify({ action: 'update_status', data: deliveryData }) }],
+        });
+        await producer.disconnect();
+        res.json({ message: 'Delivery status update request sent' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
