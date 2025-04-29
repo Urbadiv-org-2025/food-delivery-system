@@ -1132,31 +1132,31 @@ router.post(
   }
 );
 
-router.post(
-  "/notifications",
-  authenticate,
-  restrictTo("admin"),
-  async (req, res) => {
-    try {
-      await producer.connect();
-      const notificationData = { ...req.body, id: Date.now().toString() };
-      await producer.send({
-        topic: "notification-events",
-        messages: [
-          {
-            value: JSON.stringify({
-              action: req.body.action,
-              data: notificationData,
-            }),
-          },
-        ],
-      });
-      await producer.disconnect();
-      res.status(201).json({ message: "Notification request sent" });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
+// router.post(
+//   "/notifications",
+//   authenticate,
+//   restrictTo("admin"),
+//   async (req, res) => {
+//     try {
+//       await producer.connect();
+//       const notificationData = { ...req.body, id: Date.now().toString() };
+//       await producer.send({
+//         topic: "notification-events",
+//         messages: [
+//           {
+//             value: JSON.stringify({
+//               action: req.body.action,
+//               data: notificationData,
+//             }),
+//           },
+//         ],
+//       });
+//       await producer.disconnect();
+//       res.status(201).json({ message: "Notification request sent" });
+//     } catch (err) {
+//       res.status(500).json({ error: err.message });
+//     }
+//   }
+// );
 
 module.exports = router;

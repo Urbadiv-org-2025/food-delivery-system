@@ -38,8 +38,8 @@ const runConsumer = async (io) => {
                         }
                     });
                     await order.save();
-                    console.log(`Order created: ${data.id}`);
-                    await sendNotification('notify_customer', { orderId: data.id, email: data.email, message: 'Order placed successfully. Please complete payment.' });
+                    console.log(`Order created: ${data.email}`);
+                    await sendNotification('notify_customer', {  email: data.email, phoneNumber: '+94778889560', status: `Order ID ${data.id}, Order placed successfully. Please complete payment.` });
                     io.to(`order:${data.id}`).emit('orderUpdate', {
                         orderId: data.id,
                         status: 'pending',
@@ -71,8 +71,9 @@ const runConsumer = async (io) => {
                         return;
                     }
                     await Order.updateOne({ id: data.id }, { status: 'confirmed', paymentId: data.paymentId });
-                    console.log(`Order confirmed: ${data.id}`);
+                    console.log(`Order confirmed: ${data.email}`);
                     await sendNotification('notify_restaurant', { restaurantId: data.restaurantId, orderId: data.id, message: 'New order received' });
+                    await sendNotification('notify_customer', {  email: data.email, phoneNumber: '+94778889560', message: `Order ID ${data.id}, Order confirmed successfully. Please complete payment.` });
                     io.to(`order:${data.id}`).emit('orderUpdate', {
                         orderId: data.id,
                         status: 'confirmed',
@@ -134,7 +135,7 @@ const runConsumer = async (io) => {
                 } else if (action === 'prepare') {
                     await Order.updateOne({ id: data.id }, { status: 'preparing' });
                     console.log(`Order preparing: ${data.id}`);
-                    await sendNotification('notify_customer', { orderId: data.id, email: data.email, message: 'Order is being prepared' });
+                    await sendNotification('notify_customer', {  email: data.email, phoneNumber: '+94778889560', status: `Order ID ${data.id}, Order accepted by the restaurant successfully. Please complete payment.` });
                     io.to(`order:${data.id}`).emit('orderUpdate', {
                         orderId: data.id,
                         status: 'preparing',
@@ -159,7 +160,7 @@ const runConsumer = async (io) => {
                 } else if (action === 'deliver') {
                     await Order.updateOne({ id: data.id }, { status: 'delivered' });
                     console.log(`Order delivered: ${data.id}`);
-                    await sendNotification('notify_customer', { orderId: data.id, email: data.email, message: 'Order delivered' });
+                    await sendNotification('notify_customer', {  email: data.email, phoneNumber: '+94778889560', status: `Order ID ${data.id}, Order delivered successfully. Please complete payment.` });
                     io.to(`order:${data.id}`).emit('orderUpdate', {
                         orderId: data.id,
                         status: 'delivered',

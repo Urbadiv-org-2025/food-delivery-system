@@ -45,7 +45,7 @@ const App = () => (
             <Route path="/restaurants/:id/menu/new" element={<CreateMenuItem />} />
             <Route path="/restaurants/:restaurantId/menu/:id" element={<MenuDetails />} />
             <Route path="/restaurants/:restaurantId/menu/:id/edit" element={<EditMenuItem />} />
-            <Route path="/admin-dashboard" element={<div>Admin Dashboard</div>} />
+            {/* <Route path="/admin-dashboard" element={<div>Admin Dashboard</div>} /> */}
             <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} /> 
             <Route path="/admin-dashboard" element={<AdminDashboard/>} />
             <Route path="/admin/restaurants" element={<VerifyRestaurantRegistration />} />
