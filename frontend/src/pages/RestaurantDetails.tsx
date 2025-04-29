@@ -130,9 +130,7 @@ const RestaurantDetails = () => {
             <div>
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-2xl font-bold">Menu Items</h3>
-                <Button onClick={() => navigate(`/restaurants/${id}/menu/new`)}>
-                  Create New Menu Item
-                </Button>
+                
               </div>
 
               {menuLoading ? (
