@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { io } from "socket.io-client";
 import DeliveryMap from "@/components/DeliveryMap"; // Reuse your map
+import { useParams } from 'react-router-dom';
 
 const socket = io("http://localhost:3004"); // Your server URL
 
-const CustomerTrackingPage = ({ deliveryId }: { deliveryId: string }) => {
+const CustomerTrackingPage = () => {
   const token = localStorage.getItem("token"); // Retrieve the token string directly
+  const { deliveryId } = useParams<{ deliveryId: string }>();
 
   const [driverLocation, setDriverLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [stopLocation, setStopLocation] = useState<{ latitude: number; longitude: number } | null>(null);

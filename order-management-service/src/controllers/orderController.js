@@ -143,12 +143,35 @@ const runConsumer = async (io) => {
                     });
                     console.log(`Emitted orderUpdate to order:${data.id}`);
                 } else if (action === 'ready') {
+                    const order = await Order.findOne({ id: data.id });
+                    if (!order) {
+                        console.log(`Order ${data.id} not found`);
+                        await sendToDLQ(message.value, 'Order not found');
+                        return;
+                    }
                     await Order.updateOne({ id: data.id }, { status: 'ready' });
                     console.log(`Order ready: ${data.id}`);
                     await producer.connect();
                     await producer.send({
                         topic: 'delivery-events',
-                        messages: [{ value: JSON.stringify({ action: 'assign', data: { orderId: data.id, restaurantId: data.restaurantId } }) }],
+                        messages: [{
+                            value: JSON.stringify({
+                                action: 'assign',
+                                data: {
+                                    id: data.id, 
+                                    orderId: data.id,
+                                    restaurantId: data.restaurantId,
+                                    startLocation: {
+                                        longitude: data.longitude,
+                                        latitude: data.latitude
+                                    },
+                                    endLocation: {
+                                        longitude: order.location.coordinates[0], // Order's longitude
+                                        latitude: order.location.coordinates[1]  // Order's latitude
+                                    }
+                                }
+                            })
+                        }],
                     });
                     await producer.disconnect();
                     io.to(`order:${data.id}`).emit('orderUpdate', {
@@ -157,7 +180,7 @@ const runConsumer = async (io) => {
                         message: 'Order is ready for delivery'
                     });
                     console.log(`Emitted orderUpdate to order:${data.id}`);
-                } else if (action === 'deliver') {
+                }else if (action === 'deliver') {
                     await Order.updateOne({ id: data.id }, { status: 'delivered' });
                     console.log(`Order delivered: ${data.id}`);
                     await sendNotification('notify_customer', {  email: data.email, phoneNumber: '+94778889560', status: `Order ID ${data.id}, Order delivered successfully. Please complete payment.` });
