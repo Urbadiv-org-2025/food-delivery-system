@@ -78,7 +78,7 @@ const RestaurantDetailsClient = () => {
      {/* Map & Info Section */}
 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
   {/* Map */}
-  <div className="md:col-span-2 h-56 rounded-lg overflow-hidden relative">
+  <div className="md:col-span-2 h-46 rounded-lg overflow-hidden relative">
     <iframe
       src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyAjt-GCTto9WtDApGDNMGD1wkppIli-pHA&q=${restaurant.location?.latitude},${restaurant.location?.longitude}&zoom=14`}
       width="100%"
@@ -93,7 +93,7 @@ const RestaurantDetailsClient = () => {
   </div>
 
   {/* Info box */}
-  <div className="bg-white rounded-lg shadow p-6 flex flex-col justify-between h-56">
+  <div className="bg-white rounded-lg shadow p-6 flex flex-col justify-between h-46">
     <div>
       <p className="text-sm text-gray-500 font-semibold mb-1">📍 Address</p>
       <p className="text-base font-medium">{restaurant.location?.address}</p>
