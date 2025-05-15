@@ -23,6 +23,23 @@ const runConsumer = async (io) => {
                     return;
                 }
 
+                // Helper function to emit updated restaurant orders
+                const emitRestaurantOrders = async (restaurantId) => {
+                    const orders = await Order.find({ restaurantId }).sort({ id: -1 });
+                    io.to(`restaurant:${restaurantId}`).emit('orderUpdate', {
+                        restaurantId,
+                        orders: orders.map(order => ({
+                            orderId: order.id,
+                            status: order.status,
+                            message: statusMessages[order.status] || `Order status: ${order.status}`,
+                            customerId: order.customerId,
+                            items: order.items,
+                            total: order.total
+                        })),
+                        message: orders.length > 0 ? 'Updated restaurant orders' : 'No active orders for this restaurant'
+                    });
+                };
+
                 if (action === 'create') {
                     console.log('Processing create action:', data);
                     const order = new Order({
@@ -39,7 +56,7 @@ const runConsumer = async (io) => {
                     });
                     await order.save();
                     console.log(`Order created: ${data.email}`);
-                    await sendNotification('notify_customer', {  email: data.email, phoneNumber: '+94778889560', status: `Order ID ${data.id}, Order placed successfully. Please complete payment.` });
+                    await sendNotification('notify_customer', { email: data.email, phoneNumber: '+94778889560', status: `Order ID ${data.id}, Order placed successfully. Please complete payment.` });
                     io.to(`order:${data.id}`).emit('orderUpdate', {
                         orderId: data.id,
                         status: 'pending',
@@ -54,6 +71,7 @@ const runConsumer = async (io) => {
                         message: 'New order received'
                     });
                     console.log(`Emitted newOrder to restaurant:${data.restaurantId}`);
+                    await emitRestaurantOrders(data.restaurantId);
                 } else if (action === 'confirm') {
                     if (!data.paymentId) {
                         console.log(`Order ${data.id} cannot be confirmed; no payment ID provided`);
@@ -73,13 +91,14 @@ const runConsumer = async (io) => {
                     await Order.updateOne({ id: data.id }, { status: 'confirmed', paymentId: data.paymentId });
                     console.log(`Order confirmed: ${data.email}`);
                     await sendNotification('notify_restaurant', { restaurantId: data.restaurantId, orderId: data.id, message: 'New order received' });
-                    await sendNotification('notify_customer', {  email: data.email, phoneNumber: '+94778889560', message: `Order ID ${data.id}, Order confirmed successfully. Please complete payment.` });
+                    await sendNotification('notify_customer', { email: data.email, phoneNumber: '+94778889560', message: `Order ID ${data.id}, Order confirmed successfully. Please complete payment.` });
                     io.to(`order:${data.id}`).emit('orderUpdate', {
                         orderId: data.id,
                         status: 'confirmed',
                         message: 'Order confirmed successfully'
                     });
                     console.log(`Emitted orderUpdate to order:${data.id}`);
+                    await emitRestaurantOrders(data.restaurantId);
                 } else if (action === 'update') {
                     const order = await Order.findOne({ id: data.id });
                     if (order.status !== 'pending') {
@@ -97,6 +116,7 @@ const runConsumer = async (io) => {
                         message: 'Order updated successfully'
                     });
                     console.log(`Emitted orderUpdate to order:${data.id}`);
+                    await emitRestaurantOrders(order.restaurantId);
                 } else if (action === 'cancel') {
                     const order = await Order.findOne({ id: data.id });
                     if (!order) {
@@ -132,16 +152,18 @@ const runConsumer = async (io) => {
                         console.log(`Emitted orderUpdate to order:${data.id}`);
                     }
                     await sendNotification('notify_customer', { orderId: data.id, email: data.email, message: order.status === 'confirmed' ? 'Order canceled and refund initiated' : 'Order canceled' });
+                    await emitRestaurantOrders(order.restaurantId);
                 } else if (action === 'prepare') {
                     await Order.updateOne({ id: data.id }, { status: 'preparing' });
                     console.log(`Order preparing: ${data.id}`);
-                    await sendNotification('notify_customer', {  email: data.email, phoneNumber: '+94778889560', status: `Order ID ${data.id}, Order accepted by the restaurant successfully. Please complete payment.` });
+                    await sendNotification('notify_customer', { email: data.email, phoneNumber: '+94778889560', status: `Order ID ${data.id}, Order accepted by the restaurant successfully. Please complete payment.` });
                     io.to(`order:${data.id}`).emit('orderUpdate', {
                         orderId: data.id,
                         status: 'preparing',
                         message: 'Order is being prepared'
                     });
                     console.log(`Emitted orderUpdate to order:${data.id}`);
+                    await emitRestaurantOrders(data.restaurantId);
                 } else if (action === 'ready') {
                     const order = await Order.findOne({ id: data.id });
                     if (!order) {
@@ -158,7 +180,7 @@ const runConsumer = async (io) => {
                             value: JSON.stringify({
                                 action: 'assign',
                                 data: {
-                                    id: data.id, 
+                                    id: data.id,
                                     orderId: data.id,
                                     restaurantId: data.restaurantId,
                                     startLocation: {
@@ -180,16 +202,18 @@ const runConsumer = async (io) => {
                         message: 'Order is ready for delivery'
                     });
                     console.log(`Emitted orderUpdate to order:${data.id}`);
-                }else if (action === 'deliver') {
+                    await emitRestaurantOrders(data.restaurantId);
+                } else if (action === 'deliver') {
                     await Order.updateOne({ id: data.id }, { status: 'delivered' });
                     console.log(`Order delivered: ${data.id}`);
-                    await sendNotification('notify_customer', {  email: data.email, phoneNumber: '+94778889560', status: `Order ID ${data.id}, Order delivered successfully. Please complete payment.` });
+                    await sendNotification('notify_customer', { email: data.email, phoneNumber: '+94778889560', status: `Order ID ${data.id}, Order delivered successfully. Please complete payment.` });
                     io.to(`order:${data.id}`).emit('orderUpdate', {
                         orderId: data.id,
                         status: 'delivered',
                         message: 'Order delivered'
                     });
                     console.log(`Emitted orderUpdate to order:${data.id}`);
+                    await emitRestaurantOrders(data.restaurantId);
                 }
             } catch (error) {
                 console.error(`Error processing message on topic ${topic}, partition ${partition}, offset ${message.offset}:`, error);
