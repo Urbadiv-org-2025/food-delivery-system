@@ -1,7 +1,7 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import { ArrowRight, Utensils, MapPin, Clock, ShieldCheck, Menu, X } from 'lucide-react';
 
 const LandingPage = () => {
@@ -11,6 +11,8 @@ const LandingPage = () => {
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
+  // Inside your Home component:
+const navigate = useNavigate();
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
@@ -140,16 +142,22 @@ const LandingPage = () => {
               Our simple 3-step process makes food ordering quick and convenient
             </p>
           </div>
-          
-          <div className="mt-16 grid md:grid-cols-3 gap-8">
-            <div className="bg-gray-50 p-8 rounded-2xl text-center hover:shadow-lg transition-shadow transform hover:-translate-y-1 duration-300">
+
+          {/* Add a grid container for the three steps */}
+          <div className="grid md:grid-cols-3 gap-8 mt-12">
+            <div
+              onClick={() => navigate("/restaurants/explore")}
+              className="cursor-pointer bg-gray-50 p-8 rounded-2xl text-center hover:shadow-lg transition-shadow transform hover:-translate-y-1 duration-300"
+            >
               <div className="inline-flex items-center justify-center p-4 bg-[#FF4B3E]/10 rounded-full mb-6">
                 <Utensils className="h-10 w-10 text-[#FF4B3E]" />
               </div>
               <h3 className="text-2xl font-semibold mb-4">Select Restaurant</h3>
-              <p className="text-gray-600">Browse through our curated list of restaurants and find your favorite foods.</p>
-            </div>
-            
+              <p className="text-gray-600">
+                Browse through our curated list of restaurants and find your favorite foods.
+              </p>
+            </div>    
+
             <div className="bg-gray-50 p-8 rounded-2xl text-center hover:shadow-lg transition-shadow transform hover:-translate-y-1 duration-300">
               <div className="inline-flex items-center justify-center p-4 bg-[#FF4B3E]/10 rounded-full mb-6">
                 <MapPin className="h-10 w-10 text-[#FF4B3E]" />

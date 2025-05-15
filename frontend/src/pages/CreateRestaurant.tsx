@@ -9,6 +9,7 @@ import { toast } from "@/components/ui/use-toast";
 import GoogleMapPicker from "@/components/ui/GoogleMapPicker";
 import { TimePicker } from "@/components/ui/time-picker";
 import { loadGoogleMapsScript } from "@/lib/googleMaps";
+import RestaurantAdminNavigation from "@/components/RestaurantAdminNavigation";
 
 const cuisineOptions = [
   "Italian", "Chinese", "Indian", "Mexican", "American",
@@ -93,69 +94,72 @@ const CreateRestaurant = () => {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
-      <h2 className="text-2xl font-bold mb-4">Create New Restaurant</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Restaurant Name"
-          required
-        />
+    <div className="flex">
+      <RestaurantAdminNavigation />
+      <div className="flex-1 p-8">
+        <h2 className="text-2xl font-bold mb-4">Create New Restaurant</h2>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Restaurant Name"
+            required
+          />
 
-        <div className="space-y-2">
-          <label>Cuisine</label>
-          <Select value={selectedCuisine} onValueChange={setSelectedCuisine}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Cuisine" />
-            </SelectTrigger>
-            <SelectContent>
-              {cuisineOptions.map((cuisine) => (
-                <SelectItem key={cuisine} value={cuisine}>
-                  {cuisine}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <label>Availability</label>
-          <div className="flex items-center space-x-2">
-            <Switch checked={available} onCheckedChange={setAvailable} />
-            <span>{available ? "Open" : "Closed"}</span>
+          <div className="space-y-2">
+            <label>Cuisine</label>
+            <Select value={selectedCuisine} onValueChange={setSelectedCuisine}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select Cuisine" />
+              </SelectTrigger>
+              <SelectContent>
+                {cuisineOptions.map((cuisine) => (
+                  <SelectItem key={cuisine} value={cuisine}>
+                    {cuisine}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <label>Opening Hours</label>
-          <TimePicker value={openingHours} onChange={setOpeningHours} />
-        </div>
-
-        <div className="space-y-2">
-          <label>Location</label>
-          {isMapLoaded ? (
-            <GoogleMapPicker location={location} setLocation={setLocation} initialLoad={true} />
-          ) : (
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-md text-center">
-              <p>Loading map...</p>
+          <div className="space-y-2">
+            <label>Availability</label>
+            <div className="flex items-center space-x-2">
+              <Switch checked={available} onCheckedChange={setAvailable} />
+              <span>{available ? "Open" : "Closed"}</span>
             </div>
-          )}
-        </div>
+          </div>
 
-        <div className="space-y-2">
-          <label>Upload Restaurant Image</label>
-          <Input type="file" onChange={(e) => setImage(e.target.files?.[0] || null)} accept="image/*" required />
-        </div>
+          <div className="space-y-2">
+            <label>Opening Hours</label>
+            <TimePicker value={openingHours} onChange={setOpeningHours} />
+          </div>
 
-        <Button
-          type="submit"
-          className="bg-[#FF4B3E] hover:bg-[#FF6B5E] w-full"
-          disabled={isLoading}
-        >
-          {isLoading ? "Creating..." : "Create Restaurant"}
-        </Button>
-      </form>
+          <div className="space-y-2">
+            <label>Location</label>
+            {isMapLoaded ? (
+              <GoogleMapPicker location={location} setLocation={setLocation} initialLoad={true} />
+            ) : (
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-md text-center">
+                <p>Loading map...</p>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label>Upload Restaurant Image</label>
+            <Input type="file" onChange={(e) => setImage(e.target.files?.[0] || null)} accept="image/*" required />
+          </div>
+
+          <Button
+            type="submit"
+            className="bg-[#FF4B3E] hover:bg-[#FF6B5E] w-full"
+            disabled={isLoading}
+          >
+            {isLoading ? "Creating..." : "Create Restaurant"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };

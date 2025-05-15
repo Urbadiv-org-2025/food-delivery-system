@@ -847,23 +847,44 @@ router.delete(
   }
 );
 
-// Add these routes before the existing restaurant routes
 router.get("/restaurants/filter", async (req, res) => {
   try {
     const { cuisine, available, menuCategory } = req.query;
+
+    console.log("Filter request params:", {
+      cuisine,
+      available,
+      menuCategory,
+    });
+
+    // Build params cleanly: only include non-empty ones
+    const params = {};
+
+    if (cuisine) params.cuisine = cuisine;
+    if (available) params.available = available;
+    if (menuCategory) params.menuCategory = menuCategory;
+
+    console.log("Final params sent to restaurant-service:", params);
+
+    // The restaurant service API has the structure /api/restaurants/filter
     const response = await axios.get(
       "http://localhost:3002/api/restaurants/filter",
-      {
-        params: {
-          cuisine,
-          available,
-          menuCategory,
-        },
-      }
+      { params }
     );
+
+    // Return the response data from the restaurant service
     res.json(response.data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Error in filter restaurants:", err);
+    if (err.response?.data) {
+      res.status(err.response.status).json(err.response.data);
+    } else {
+      res.status(500).json({
+        success: false,
+        error: "Failed to filter restaurants",
+        details: err.message,
+      });
+    }
   }
 });
 

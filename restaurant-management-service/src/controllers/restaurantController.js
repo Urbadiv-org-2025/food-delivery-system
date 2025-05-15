@@ -389,46 +389,80 @@ const getAvailableRestaurantMenu = async (req, res) => {
 const getFilteredRestaurants = async (req, res) => {
   try {
     const { cuisine, available, menuCategory } = req.query;
-    let query = {};
 
-    // Build the filter query
+    // ✅ Initial MongoDB query
+    const query = { adminAccept: true };
+
+    // ✅ Handle cuisine filter
     if (cuisine) {
-      query.cuisine = cuisine;
+      const cuisines = cuisine.split(",").map((c) => c.trim());
+      query.cuisine = cuisines.length > 1 ? { $in: cuisines } : cuisines[0];
     }
 
-    if (available !== undefined) {
-      query.available = available === "true";
+    // ✅ Handle available filter
+    if (available === "true" || available === "false") {
+      query.available = available === "true"; // strictly boolean
     }
 
-    query.adminAccept = true;
+    console.log("Executing Mongo Query:", query);
 
+    // ✅ First fetch restaurants (filtered)
     let restaurants = await Restaurant.find(query);
 
-    // If menu category is specified, filter restaurants that have menu items in that category
-    if (menuCategory) {
-      const restaurantIds = restaurants.map((r) => r.id);
-      const menuItems = await MenuItem.find({
-        restaurantId: { $in: restaurantIds },
-        category: menuCategory,
-        available: true,
+    // Always return a success response, even if no restaurants found
+    if (!restaurants.length) {
+      return res.status(200).json({
+        success: true,
+        count: 0,
+        data: [],
+        message: "No restaurants found matching filters",
       });
-
-      const restaurantsWithMenuCategory = new Set(
-        menuItems.map((item) => item.restaurantId)
-      );
-      restaurants = restaurants.filter((r) =>
-        restaurantsWithMenuCategory.has(r.id)
-      );
     }
 
-    res.status(200).json({
+    // ✅ If menuCategory selected, filter by menu items
+    if (menuCategory) {
+      const menuItems = await MenuItem.find({
+        restaurantId: { $in: restaurants.map((r) => r.id) },
+        category: menuCategory,
+        available: true,
+      }).select("restaurantId");
+
+      const validRestaurantIds = new Set(
+        menuItems.map((item) => item.restaurantId.toString())
+      );
+
+      // Filter restaurants that have matching menu items
+      restaurants = restaurants.filter((r) =>
+        validRestaurantIds.has(r.id.toString())
+      );
+
+      console.log("After menu category filter:", restaurants.length);
+
+      // If no restaurants left after menu filtering, return empty array
+      if (restaurants.length === 0) {
+        return res.status(200).json({
+          success: true,
+          count: 0,
+          data: [],
+          message: "No restaurants found with the specified menu category",
+        });
+      }
+    }
+
+    // Remove sorting by rating since we're not filtering by it anymore
+
+    return res.status(200).json({
       success: true,
       count: restaurants.length,
       data: restaurants,
     });
   } catch (error) {
     console.error("Error filtering restaurants:", error);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({
+      success: false,
+      error: "Failed to filter restaurants",
+      details: error.message,
+    });
   }
 };
 
