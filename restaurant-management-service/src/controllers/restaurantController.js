@@ -282,22 +282,22 @@ const runConsumer = async () => {
 
             case "admin_approve":
               try {
-                const { id } = restaurantData;
-                const updatedRestaurant = await Restaurant.findOneAndUpdate(
-                  { id },
-                  { adminAccept: true },
-                  { new: true }
-                );
+              const { id, available } = restaurantData;
+              const updatedRestaurant = await Restaurant.findOneAndUpdate(
+                { id },
+                { adminAccept: true, available: available !== undefined ? available : true },
+                { new: true }
+              );
 
-                if (!updatedRestaurant) {
-                  console.error(`Restaurant not found with id: ${id}`);
-                  break;
-                }
+              if (!updatedRestaurant) {
+                console.error(`Restaurant not found with id: ${id}`);
+                break;
+              }
 
-                console.log(`Restaurant approved: ${id}`);
+              console.log(`Restaurant approved and availability updated: ${id}`);
               } catch (error) {
-                console.error("Error in restaurant approval:", error);
-                console.error(error.stack);
+              console.error("Error in restaurant approval:", error);
+              console.error(error.stack);
               }
               break;
           }

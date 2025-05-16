@@ -1,5 +1,5 @@
 const express = require('express');
-const { login, getUser, getAllUsers, deleteUser, editUser } = require('../controllers/userController');
+const { login, getUser, getAllUsers, deleteUser, editUser , adminApprove} = require('../controllers/userController');
 
 const router = express.Router();
 
@@ -8,5 +8,6 @@ router.get('/users/:id', getUser);
 router.get('/users', getAllUsers); // Route to get all users
 router.delete('/users/:id', deleteUser); // Route to delete a user
 router.put('/users/:id', editUser); // Route to edit a user
+router.post('/admin/approve', adminApprove);
 
 module.exports = router;

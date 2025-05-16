@@ -301,13 +301,13 @@ export const OrderStatus = ({ orderId, onPlaceNewOrder }: OrderStatusProps) => {
           {order.items.map((item, index) => (
             <div key={index} className="flex justify-between">
               <span>{item.name} x {item.quantity}</span>
-              <span>${(item.price * item.quantity).toFixed(2)}</span>
+              <span>Rs. {(item.price * item.quantity).toFixed(2)}</span>
             </div>
           ))}
           <div className="border-t pt-2">
             <div className="flex justify-between font-semibold">
               <span>Total</span>
-              <span>${order.total.toFixed(2)}</span>
+              <span>Rs. {order.total.toFixed(2)}</span>
             </div>
           </div>
           <div className="flex items-center text-sm text-gray-500">

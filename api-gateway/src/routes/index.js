@@ -96,6 +96,18 @@ router.get(
   }
 );
 
+router.post("/admin/approve", async (req, res) => {
+  try {
+    const response = await axios.post(
+      "http://localhost:3001/api/admin/approve",
+      req.body
+    );
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post(
   "/menu",
   authenticate,
@@ -457,7 +469,7 @@ router.get(
 router.post(
   "/orders/:id/prepare",
   authenticate,
-  restrictTo("restaurant_admin"),
+  restrictTo("restaurant_admin","delivery_personnel"),
   async (req, res) => {
     try {
       await producer.connect();
@@ -483,7 +495,7 @@ router.post(
 router.post(
   "/orders/:id/ready",
   authenticate,
-  restrictTo("restaurant_admin"),
+  restrictTo("restaurant_admin","delivery_personnel"),
   async (req, res) => {
     try {
       await producer.connect();

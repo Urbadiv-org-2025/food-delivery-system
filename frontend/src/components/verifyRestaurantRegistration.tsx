@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import AdminNavigation from "./adminNavigation";
+import { log } from "console";
 
 interface Restaurant {
     id: string;
@@ -9,6 +10,7 @@ interface Restaurant {
     cuisine: string;
     rating: number;
     openingHours: string;
+    available: boolean;
 }
 
 const VerifyRestaurantRegistration: React.FC = () => {
@@ -34,6 +36,7 @@ const VerifyRestaurantRegistration: React.FC = () => {
                     cuisine: restaurant.cuisine,
                     rating: restaurant.rating,
                     openingHours: restaurant.openingHours,
+                    available: restaurant.available,
                 }));
                 setRestaurants(restaurants);
             } catch (err) {
@@ -44,27 +47,43 @@ const VerifyRestaurantRegistration: React.FC = () => {
         };
 
         fetchRestaurants();
+        
+        
     }, []);
+
+    console.log(restaurants);
+    
 
     const handleToggleApproval = async (restaurantId: string, currentStatus: boolean) => {
         try {
-            const response = await new Promise<{ success: boolean }>((resolve) =>
-                setTimeout(() => resolve({ success: true }), 1000)
-            );
+            console.log(restaurantId, currentStatus);
+            
+            const response = await fetch("http://localhost:3000/api/admin/approve", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: restaurantId,
+                    available: !currentStatus,
+                }),
+            });
 
-            if (response.success) {
-                setRestaurants((prev) =>
-                    prev.map((restaurant) =>
-                        restaurant.id === restaurantId
-                            ? { ...restaurant, isApproved: !currentStatus }
-                            : restaurant
-                    )
-                );
+            window.location.reload(); // Refresh the page
+
+            if (!response.ok) {
+                throw new Error("Failed to update approval status.");
+            }
+
+            const result = await response.json();
+
+            if (result.success) {
                 alert(
                     `Restaurant has been ${
                         currentStatus ? "rejected" : "approved"
                     } successfully.`
                 );
+                window.location.reload(); // Refresh the page
             } else {
                 alert("Failed to update approval status.");
             }
@@ -138,16 +157,16 @@ const VerifyRestaurantRegistration: React.FC = () => {
                                             onClick={() =>
                                                 handleToggleApproval(
                                                     restaurant.id,
-                                                    restaurant.isApproved
+                                                    restaurant.available
                                                 )
                                             }
                                             className={`w-full md:w-auto py-2 px-4 md:px-6 rounded-md text-sm font-medium text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${
-                                                restaurant.isApproved
+                                                restaurant.available
                                                     ? "bg-red-600 hover:bg-red-700 focus:ring-red-500"
                                                     : "bg-green-600 hover:bg-green-700 focus:ring-green-500"
                                             }`}
                                         >
-                                            {restaurant.isApproved ? "Reject" : "Approve"}
+                                            {restaurant.available ? "Reject" : "Approve"}
                                         </button>
                                     </li>
                                 ))}

@@ -12,8 +12,8 @@ import { History, ShoppingCart, X } from 'lucide-react';
 
 // Mock data - replace with actual restaurant menu data
 const mockItems = [
-  { name: "Margherita Pizza", price: 12.99, quantity: 2 },
-  { name: "Garlic Bread", price: 4.99, quantity: 1 }
+  { name: "Kottu", price: 1000, quantity: 2 },
+  { name: "Fried Rice", price: 1000, quantity: 1 }
 ];
 
 const Index = () => {

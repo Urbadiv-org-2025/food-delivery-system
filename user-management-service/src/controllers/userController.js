@@ -75,4 +75,30 @@ const editUser = async (req, res) => {
   res.json(user);
 };
 
-module.exports = { runConsumer, login, getUser, getAllUsers, deleteUser, editUser };
+const adminApprove = async (req, res) => {
+  const { id, available } = req.body;
+
+  try {
+    const producer = kafka.producer();
+    await producer.connect();
+
+    const event = {
+      action: 'admin_approve',
+      data: { id, available },
+    };
+
+    await producer.send({
+      topic: 'restaurant-events',
+      messages: [{ value: JSON.stringify(event) }],
+    });
+
+    await producer.disconnect();
+
+    res.json({ message: 'Approval event sent successfully', event });
+  } catch (error) {
+    console.error('Error sending approval event:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+module.exports = { runConsumer, login, getUser, getAllUsers, deleteUser, editUser , adminApprove};

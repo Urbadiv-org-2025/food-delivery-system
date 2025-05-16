@@ -307,7 +307,7 @@ export const OrderHistory = ({ onViewOrder }: OrderHistoryProps) => {
 
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-3 sm:mt-4 gap-2">
                         <div className="font-semibold text-gray-800 text-sm sm:text-base">
-                          Total: ${order.total.toFixed(2)}
+                          Total: Rs.{order.total.toFixed(2)}
                         </div>
                         <div className="flex space-x-2 w-full sm:w-auto">
                           {canCancelOrder(order.status) && (
