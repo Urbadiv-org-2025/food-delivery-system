@@ -14,13 +14,13 @@ type Order = {
   items: { name: string; price: number; quantity: number }[];
   status: OrderStatus;
   total: number;
-  customerEmail?: string; // Optional, assuming it's available from backend
+  customerEmail: string; // Made required for consistency
 };
 
 interface RestaurantOrdersProps {
-    restaurantId: string;
-    location: { latitude: number; longitude: number };
-  }
+  restaurantId: string;
+  location: { latitude: number; longitude: number };
+}
 
 const statusColors: Record<OrderStatus, string> = {
   pending: "bg-yellow-200 text-yellow-800",
@@ -34,10 +34,8 @@ const statusColors: Record<OrderStatus, string> = {
 const RestaurantOrders: React.FC<RestaurantOrdersProps> = ({ restaurantId, location }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [socket, setSocket] = useState<Socket | null>(null);
-  // const restaurantId = "restaurant_123"; 
-  const apiBaseUrl = 'http://localhost:3000/api'; // Adjust if your API base URL is different
-  // Assume these are available (e.g., from restaurant data or context)
-  const restaurantLocation = { longitude: location.longitude, latitude: location.latitude }; 
+  const apiBaseUrl = 'http://localhost:3000/api';
+  const restaurantLocation = { longitude: location.longitude, latitude: location.latitude };
 
   useEffect(() => {
     // Initialize Socket.IO connection
@@ -54,7 +52,14 @@ const RestaurantOrders: React.FC<RestaurantOrdersProps> = ({ restaurantId, locat
     // Handle orderUpdate event
     newSocket.on('orderUpdate', (data: { restaurantId: string; orders: Order[]; message: string }) => {
       if (data.restaurantId === restaurantId && data.orders) {
-        setOrders(data.orders);
+        setOrders((prevOrders) => {
+          // Merge new orders with existing ones to preserve properties
+          const updatedOrders = data.orders.map((newOrder) => {
+            const existingOrder = prevOrders.find((o) => o.orderId === newOrder.orderId);
+            return existingOrder ? { ...existingOrder, ...newOrder } : newOrder;
+          });
+          return updatedOrders;
+        });
         toast({
           title: "Orders Updated",
           description: data.message,
@@ -64,10 +69,19 @@ const RestaurantOrders: React.FC<RestaurantOrdersProps> = ({ restaurantId, locat
 
     // Handle newOrder event
     newSocket.on('newOrder', (data: Order & { message: string }) => {
-      setOrders((prev) => [
-        { ...data, orderId: data.orderId },
-        ...prev.filter((order) => order.orderId !== data.orderId),
-      ]);
+      setOrders((prevOrders) => {
+        // Prevent duplicates and ensure proper merging
+        const existingOrderIndex = prevOrders.findIndex((o) => o.orderId === data.orderId);
+        if (existingOrderIndex !== -1) {
+          // Update existing order
+          const updatedOrders = [...prevOrders];
+          updatedOrders[existingOrderIndex] = { ...prevOrders[existingOrderIndex], ...data };
+          return updatedOrders;
+        } else {
+          // Add new order
+          return [{ ...data, customerEmail: data.customerEmail || 'unknown' }, ...prevOrders];
+        }
+      });
       toast({
         title: "New Order Received",
         description: `Order ${data.orderId}: ${data.message}`,
@@ -93,9 +107,9 @@ const RestaurantOrders: React.FC<RestaurantOrdersProps> = ({ restaurantId, locat
   const handleAcceptOrder = async (orderId: string, customerEmail: string) => {
     try {
       const response = await axios.post(
-          `${apiBaseUrl}/orders/${orderId}/prepare`,
-          { customerEmail },
-          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } } // Adjust based on your auth method
+        `${apiBaseUrl}/orders/${orderId}/prepare`,
+        { customerEmail },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
       toast({
         title: "Order Accepted",
@@ -113,9 +127,9 @@ const RestaurantOrders: React.FC<RestaurantOrdersProps> = ({ restaurantId, locat
   const handleDeclineOrder = async (orderId: string, customerEmail: string) => {
     try {
       const response = await axios.post(
-          `${apiBaseUrl}/orders/${orderId}/cancel`,
-          { customerEmail },
-          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } } // Adjust based on your auth method
+        `${apiBaseUrl}/orders/${orderId}/cancel`,
+        { customerEmail },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
       toast({
         title: "Order Declined",
@@ -133,9 +147,9 @@ const RestaurantOrders: React.FC<RestaurantOrdersProps> = ({ restaurantId, locat
   const handleMarkReady = async (orderId: string) => {
     try {
       const response = await axios.post(
-          `${apiBaseUrl}/orders/${orderId}/ready`,
-          { longitude: restaurantLocation.longitude, latitude: restaurantLocation.latitude },
-          { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } } // Adjust based on your auth method
+        `${apiBaseUrl}/orders/${orderId}/ready`,
+        { longitude: restaurantLocation.longitude, latitude: restaurantLocation.latitude },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
       toast({
         title: "Order Marked as Ready",
@@ -151,13 +165,13 @@ const RestaurantOrders: React.FC<RestaurantOrdersProps> = ({ restaurantId, locat
   };
 
   return (
-      <div className="flex min-h-screen">
-        <div className="flex-1 p-6 bg-gray-50">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold mb-6">Restaurant Orders</h1>
+    <div className="flex min-h-screen">
+      <div className="flex-1 p-6 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold mb-6">Restaurant Orders</h1>
 
-            <table className="w-full table-auto border bg-white rounded-lg overflow-hidden">
-              <thead className="bg-gray-100 text-left">
+          <table className="w-full table-auto border bg-white rounded-lg overflow-hidden">
+            <thead className="bg-gray-100 text-left">
               <tr className="text-sm text-gray-700">
                 <th className="p-3">Order ID</th>
                 <th className="p-3">Customer</th>
@@ -166,67 +180,67 @@ const RestaurantOrders: React.FC<RestaurantOrdersProps> = ({ restaurantId, locat
                 <th className="p-3">Status</th>
                 <th className="p-3">Actions</th>
               </tr>
-              </thead>
-              <tbody>
+            </thead>
+            <tbody>
               {orders.map((order) => (
-                  <tr key={order.orderId} className="border-t text-sm">
-                    <td className="p-3 font-medium">{order.orderId}</td>
-                    <td className="p-3">{order.customerId}</td>
-                    <td className="p-3">
-                      <ul className="space-y-1">
-                        {order.items.map((item, idx) => (
-                            <li key={idx}>
-                              {item.name} x {item.quantity}
-                            </li>
-                        ))}
-                      </ul>
-                    </td>
-                    <td className="p-3">{order.total}</td>
-                    <td className="p-3">
+                <tr key={order.orderId} className="border-t text-sm">
+                  <td className="p-3 font-medium">{order.orderId}</td>
+                  <td className="p-3">{order.customerId}</td>
+                  <td className="p-3">
+                    <ul className="space-y-1">
+                      {order.items.map((item, idx) => (
+                        <li key={idx}>
+                          {item.name} x {item.quantity}
+                        </li>
+                      ))}
+                    </ul>
+                  </td>
+                  <td className="p-3">{order.total}</td>
+                  <td className="p-3">
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${statusColors[order.status]}`}>
                       {order.status}
                     </span>
-                    </td>
-                    <td className="p-3 space-x-2">
-                      {order.status === 'confirmed' && (
-                          <>
-                            <Button
-                                size="sm"
-                                onClick={() => handleAcceptOrder(order.orderId, order.customerEmail || '')}
-                                className="bg-green-500 hover:bg-green-600 text-white"
-                            >
-                              Accept
-                            </Button>
-                            <Button
-                                size="sm"
-                                onClick={() => handleDeclineOrder(order.orderId, order.customerEmail || '')}
-                                className="bg-red-500 hover:bg-red-600 text-white"
-                            >
-                              Decline
-                            </Button>
-                          </>
-                      )}
-                      {order.status === 'preparing' && (
-                          <Button
-                              size="sm"
-                              onClick={() => handleMarkReady(order.orderId)}
-                              className="bg-blue-500 hover:bg-blue-600 text-white"
-                          >
-                            Mark as Ready
-                          </Button>
-                      )}
-                    </td>
-                  </tr>
+                  </td>
+                  <td className="p-3 space-x-2">
+                    {order.status === 'confirmed' && (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => handleAcceptOrder(order.orderId, order.customerEmail)}
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                        >
+                          Accept
+                        </Button>
+                        <Button
+                          size="sm"
+                          onClick={() => handleDeclineOrder(order.orderId, order.customerEmail)}
+                          className="bg-red-500 hover:bg-red-600 text-white"
+                        >
+                          Decline
+                        </Button>
+                      </>
+                    )}
+                    {order.status === 'preparing' && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleMarkReady(order.orderId)}
+                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                      >
+                        Mark as Ready
+                      </Button>
+                    )}
+                  </td>
+                </tr>
               ))}
-              </tbody>
-            </table>
+            </tbody>
+          </table>
 
-            {orders.length === 0 && (
-                <p className="text-center text-gray-500 mt-8">No orders found.</p>
-            )}
-          </div>
+          {orders.length === 0 && (
+            <p className="text-center text-gray-500 mt-8">No orders found.</p>
+          )}
         </div>
       </div>
+    </div>
   );
 };
 

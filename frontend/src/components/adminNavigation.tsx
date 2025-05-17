@@ -44,42 +44,6 @@ const AdminNavigation: React.FC = () => {
                         Restaurants
                     </NavLink>
                 </li>
-                <li>
-                    <NavLink
-                        to="/admin/financial"
-                        className={({ isActive }) =>
-                            `block px-4 py-2 hover:bg-gray-700 ${
-                                isActive ? "bg-gray-700" : ""
-                            }`
-                        }
-                    >
-                        Financial
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink
-                        to="/admin/orders"
-                        className={({ isActive }) =>
-                            `block px-4 py-2 hover:bg-gray-700 ${
-                                isActive ? "bg-gray-700" : ""
-                            }`
-                        }
-                    >
-                        Orders
-                    </NavLink>
-                </li>
-                <li>
-                    <NavLink
-                        to="/admin/settings"
-                        className={({ isActive }) =>
-                            `block px-4 py-2 hover:bg-gray-700 ${
-                                isActive ? "bg-gray-700" : ""
-                            }`
-                        }
-                    >
-                        Settings
-                    </NavLink>
-                </li>
             </ul>
             <div className="p-4 border-t border-gray-700">
                 <div className="mb-2 text-sm text-gray-400">

@@ -1,3 +1,115 @@
+# version: '3.8'
+# services:
+#   zookeeper:
+#     image: confluentinc/cp-zookeeper:latest
+#     environment:
+#       ZOOKEEPER_CLIENT_PORT: 2181
+#       ZOOKEEPER_TICK_TIME: 2000
+#     ports:
+#       - "2181:2181"
+
+#   kafka:
+#     image: confluentinc/cp-kafka:latest
+#     depends_on:
+#       - zookeeper
+#     environment:
+#       KAFKA_BROKER_ID: 1
+#       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+#       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+#       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+#       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+#       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+#       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+#     ports:
+#       - "9092:9092"
+#     healthcheck:
+#       test: ["CMD", "kafka-topics.sh", "--list", "--bootstrap-server", "localhost:9092"]
+#       interval: 10s
+#       timeout: 5s
+#       retries: 5
+
+#   api-gateway:
+#     build: ./api-gateway
+#     ports:
+#       - "3000:3000"
+#     environment:
+#       - KAFKA_BROKER=kafka:9092
+#       - JWT_SECRET=ad07305c28789206693fb80b4f137c083ef0121925a484e8c3c2a5a1b78ca8bb
+#     depends_on:
+#       - kafka
+
+#   user-management-service:
+#     build: ./user-management-service
+#     ports:
+#       - "3001:3001"
+#     environment:
+#       - KAFKA_BROKER=kafka:9092
+#       - JWT_SECRET=ad07305c28789206693fb80b4f137c083ef0121925a484e8c3c2a5a1b78ca8bb
+#       - MONGO_URI=mongodb+srv://user:user@cluster0.uonoawp.mongodb.net/user-service?retryWrites=true&w=majority&appName=Cluster0
+#     depends_on:
+#       - kafka
+
+#   restaurant-management-service:
+#     build: ./restaurant-management-service
+#     ports:
+#       - "3002:3002"
+#     environment:
+#       - KAFKA_BROKER=kafka:9092
+#       - MONGO_URI=mongodb+srv://vishwakaushalya2003:vishwa2003@cluster0.xfi4t.mongodb.net/restaurent_db?retryWrites=true&w=majority&appName=Cluster0
+#     depends_on:
+#       - kafka
+
+#   order-management-service:
+#     build: ./order-management-service
+#     ports:
+#       - "3003:3003"
+#     environment:
+#       - KAFKA_BROKER=kafka:9092
+#       - MONGO_URI=mongodb+srv://dineth550:20021213@studentms.q45in7h.mongodb.net/order_db
+#     depends_on:
+#       - kafka
+
+#   delivery-management-service:
+#     build: ./delivery-management-service
+#     ports:
+#       - "3004:3004"
+#     environment:
+#       - KAFKA_BROKER=kafka:9092
+#       - MONGO_URI=mongodb+srv://user:user@cluster0.uonoawp.mongodb.net/user-service?retryWrites=true&w=majority&appName=Cluster0
+#     depends_on:
+#       - kafka
+
+#   payment-service:
+#     build: ./payment-service
+#     ports:
+#       - "3005:3005"
+#     environment:
+#       - KAFKA_BROKER=kafka:9092
+#       - STRIPE_SECRET_KEY=sk_test_51Qe7HeA97EM7XCbcspqvSrF0TQsK7tbt13Qs0KktLHkGB4b1HONCqEueeMUTThJrVwIMAF2K2p5lVVVAOxksk4CK0026Ull7bJ
+#     depends_on:
+#       - kafka
+
+#   notification-service:
+#     build: ./notification-service
+#     ports:
+#       - "3006:3006"
+#     environment:
+#       - KAFKA_BROKER=kafka:9092
+#       - TWILIO_PHONE_NUMBER=+19704108950
+#       - TWILIO_ACCOUNT_SID=ACf28ed73f804ac5ce3dad2e2a6b9add05
+#       - TWILIO_AUTH_TOKEN=77ddb186ed08276331921b4f81490683
+#       - GMAIL_USER=udereats45@gmail.com
+#       - GMAIL_PASSWORD=jcwc pcyn ngye ojie
+#     depends_on:
+#       - kafka
+
+#   frontend:
+#     build: ./frontend
+#     ports:
+#       - "8080:8080"
+#     depends_on:
+#       - api-gateway
+
 version: '3.8'
 services:
   zookeeper:
@@ -7,26 +119,53 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
+    healthcheck:
+      test: echo srvr | nc localhost 2181 || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   kafka:
     image: confluentinc/cp-kafka:latest
     depends_on:
-      - zookeeper
+      zookeeper:
+        condition: service_healthy
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,INTERNAL://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
     ports:
       - "9092:9092"
     healthcheck:
-      test: ["CMD", "kafka-topics.sh", "--list", "--bootstrap-server", "localhost:9092"]
+      test: kafka-topics --bootstrap-server localhost:9092 --list || exit 1
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 15s
+
+  kafka-init:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      kafka:
+        condition: service_healthy
+    command: >
+      bash -c "
+        echo 'Waiting for Kafka to be ready...' &&
+        kafka-topics --bootstrap-server kafka:9092 --list &&
+        echo 'Creating necessary topics...' &&
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic user-events --partitions 1 --replication-factor 1 &&
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic restaurant-events --partitions 1 --replication-factor 1 &&
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic order-events --partitions 1 --replication-factor 1 &&
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic payment-events --partitions 1 --replication-factor 1 &&
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic notification-events --partitions 1 --replication-factor 1 &&
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic delivery-events --partitions 1 --replication-factor 1 &&
+        echo 'All topics created successfully'"
 
   api-gateway:
     build: ./api-gateway
@@ -36,7 +175,10 @@ services:
       - KAFKA_BROKER=kafka:9092
       - JWT_SECRET=ad07305c28789206693fb80b4f137c083ef0121925a484e8c3c2a5a1b78ca8bb
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   user-management-service:
     build: ./user-management-service
@@ -47,7 +189,10 @@ services:
       - JWT_SECRET=ad07305c28789206693fb80b4f137c083ef0121925a484e8c3c2a5a1b78ca8bb
       - MONGO_URI=mongodb+srv://user:user@cluster0.uonoawp.mongodb.net/user-service?retryWrites=true&w=majority&appName=Cluster0
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   restaurant-management-service:
     build: ./restaurant-management-service
@@ -57,7 +202,10 @@ services:
       - KAFKA_BROKER=kafka:9092
       - MONGO_URI=mongodb+srv://vishwakaushalya2003:vishwa2003@cluster0.xfi4t.mongodb.net/restaurent_db?retryWrites=true&w=majority&appName=Cluster0
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   order-management-service:
     build: ./order-management-service
@@ -67,7 +215,10 @@ services:
       - KAFKA_BROKER=kafka:9092
       - MONGO_URI=mongodb+srv://dineth550:20021213@studentms.q45in7h.mongodb.net/order_db
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   delivery-management-service:
     build: ./delivery-management-service
@@ -77,7 +228,10 @@ services:
       - KAFKA_BROKER=kafka:9092
       - MONGO_URI=mongodb+srv://user:user@cluster0.uonoawp.mongodb.net/user-service?retryWrites=true&w=majority&appName=Cluster0
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   payment-service:
     build: ./payment-service
@@ -87,7 +241,10 @@ services:
       - KAFKA_BROKER=kafka:9092
       - STRIPE_SECRET_KEY=sk_test_51Qe7HeA97EM7XCbcspqvSrF0TQsK7tbt13Qs0KktLHkGB4b1HONCqEueeMUTThJrVwIMAF2K2p5lVVVAOxksk4CK0026Ull7bJ
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   notification-service:
     build: ./notification-service
@@ -101,11 +258,15 @@ services:
       - GMAIL_USER=udereats45@gmail.com
       - GMAIL_PASSWORD=jcwc pcyn ngye ojie
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
+      kafka-init:
+        condition: service_completed_successfully
 
   frontend:
     build: ./frontend
     ports:
       - "8080:8080"
     depends_on:
-      - api-gateway
+      api-gateway:
+        condition: service_started
