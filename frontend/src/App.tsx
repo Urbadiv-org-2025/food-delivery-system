@@ -40,7 +40,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/app" element={<Index />} />
-            <Route path="/login" element={<Navigate to="/app" replace />} />
+            <Route path="/login" element={<Navigate to="/restaurants/explore" replace />} />
             <Route path="/restaurants/explore" element={<ExploreRestaurants />} />
             {/* <Route path="/delivery_personnel-dashboard" element={<div>Delivery Dashboard</div>} /> */}
             <Route path="/restaurant_admin-dashboard" element={<RestaurantDashboard />} />
