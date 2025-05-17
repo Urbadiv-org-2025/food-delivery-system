@@ -138,40 +138,56 @@ const runConsumer = async () => {
 
           switch (action) {
             case "create":
-              const restaurantLocation = {
-                address:
-                  restaurantData.location?.address ||
-                  restaurantData["location.address"],
-                latitude: parseFloat(
-                  restaurantData.location?.latitude ||
-                    restaurantData["location.latitude"]
-                ),
-                longitude: parseFloat(
-                  restaurantData.location?.longitude ||
-                    restaurantData["location.longitude"]
-                ),
-              };
+              try {
+                // Check if admin already has a restaurant
+                const existingRestaurant = await Restaurant.findOne({
+                  restaurantAdminId: restaurantData.restaurantAdminId,
+                });
 
-              const restaurant = new Restaurant({
-                id: restaurantData.id,
-                name: restaurantData.name,
-                restaurantAdminId: restaurantData.restaurantAdminId,
-                adminAccept: false, // Set default value
-                location: restaurantLocation,
-                cuisine: restaurantData.cuisine,
-                rating: restaurantData.rating || 0,
-                reviews: restaurantData.reviews || 0,
-                openingHours: restaurantData.openingHours,
-                image: restaurantData.image,
-                available:
-                  restaurantData.available !== undefined
-                    ? restaurantData.available
-                    : true,
-              });
+                if (existingRestaurant) {
+                  console.log(
+                    `Restaurant admin ${restaurantData.restaurantAdminId} already has a restaurant`
+                  );
+                  return;
+                }
 
-              console.log("Creating restaurant:", restaurant);
-              await restaurant.save();
-              console.log(`Restaurant created: ${restaurantData.name}`);
+                const restaurantLocation = {
+                  address:
+                    restaurantData.location?.address ||
+                    restaurantData["location.address"],
+                  latitude: parseFloat(
+                    restaurantData.location?.latitude ||
+                      restaurantData["location.latitude"]
+                  ),
+                  longitude: parseFloat(
+                    restaurantData.location?.longitude ||
+                      restaurantData["location.longitude"]
+                  ),
+                };
+
+                const restaurant = new Restaurant({
+                  id: restaurantData.id,
+                  name: restaurantData.name,
+                  restaurantAdminId: restaurantData.restaurantAdminId,
+                  adminAccept: false,
+                  location: restaurantLocation,
+                  cuisine: restaurantData.cuisine,
+                  rating: restaurantData.rating || 0,
+                  reviews: restaurantData.reviews || 0,
+                  openingHours: restaurantData.openingHours,
+                  image: restaurantData.image,
+                  available:
+                    restaurantData.available !== undefined
+                      ? restaurantData.available
+                      : true,
+                });
+
+                console.log("Creating restaurant:", restaurant);
+                await restaurant.save();
+                console.log(`Restaurant created: ${restaurantData.name}`);
+              } catch (error) {
+                console.error("Error creating restaurant:", error);
+              }
               break;
 
             case "update":
@@ -282,22 +298,27 @@ const runConsumer = async () => {
 
             case "admin_approve":
               try {
-              const { id, available } = restaurantData;
-              const updatedRestaurant = await Restaurant.findOneAndUpdate(
-                { id },
-                { adminAccept: true, available: available !== undefined ? available : true },
-                { new: true }
-              );
+                const { id, available } = restaurantData;
+                const updatedRestaurant = await Restaurant.findOneAndUpdate(
+                  { id },
+                  {
+                    adminAccept: true,
+                    available: available !== undefined ? available : true,
+                  },
+                  { new: true }
+                );
 
-              if (!updatedRestaurant) {
-                console.error(`Restaurant not found with id: ${id}`);
-                break;
-              }
+                if (!updatedRestaurant) {
+                  console.error(`Restaurant not found with id: ${id}`);
+                  break;
+                }
 
-              console.log(`Restaurant approved and availability updated: ${id}`);
+                console.log(
+                  `Restaurant approved and availability updated: ${id}`
+                );
               } catch (error) {
-              console.error("Error in restaurant approval:", error);
-              console.error(error.stack);
+                console.error("Error in restaurant approval:", error);
+                console.error(error.stack);
               }
               break;
           }

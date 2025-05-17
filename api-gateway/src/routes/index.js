@@ -469,7 +469,7 @@ router.get(
 router.post(
   "/orders/:id/prepare",
   authenticate,
-  restrictTo("restaurant_admin","delivery_personnel"),
+  restrictTo("restaurant_admin", "delivery_personnel"),
   async (req, res) => {
     try {
       await producer.connect();
@@ -495,11 +495,16 @@ router.post(
 router.post(
   "/orders/:id/ready",
   authenticate,
-  restrictTo("restaurant_admin","delivery_personnel"),
+  restrictTo("restaurant_admin", "delivery_personnel"),
   async (req, res) => {
     try {
       await producer.connect();
-      const orderData = { id: req.params.id, restaurantId: req.user.id, longitude: req.body.longitude , latitude: req.body.latitude};
+      const orderData = {
+        id: req.params.id,
+        restaurantId: req.user.id,
+        longitude: req.body.longitude,
+        latitude: req.body.latitude,
+      };
       await producer.send({
         topic: "order-events",
         messages: [
@@ -675,6 +680,20 @@ router.post(
   restaurantUpload.single("image"),
   async (req, res) => {
     try {
+      // First check if the admin already has a restaurant
+      const existingRestaurant = await axios.get(
+        `http://localhost:3002/api/restaurants/admin/${req.user.id}`
+      );
+
+      if (
+        existingRestaurant.data.data &&
+        existingRestaurant.data.data.length > 0
+      ) {
+        return res.status(400).json({
+          error: "Restaurant admin can only create one restaurant",
+        });
+      }
+
       if (!req.file) {
         return res.status(400).json({ error: "Image file is required!" });
       }
