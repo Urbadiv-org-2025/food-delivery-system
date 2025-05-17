@@ -338,6 +338,8 @@ const LandingPage = () => {
     setIsMobileMenuOpen(false); // Close mobile menu on sign out
   };
 
+  if (!user) return <Navigate to="/app" replace />;
+
   if (user!==null && user.role !== "customer") {
     return <Navigate to={`/${user.role}-dashboard`} replace />;
   }
@@ -364,7 +366,7 @@ const LandingPage = () => {
                   >
                     Sign Out
                   </Button>
-                  <Link to="/login">
+                  <Link to="/restaurants/explore">
                     <Button className="bg-[#FF4B3E] hover:bg-[#FF6B5E] text-white">
                       Start Ordering
                     </Button>
@@ -412,7 +414,7 @@ const LandingPage = () => {
                   Sign Out
                 </Button>
                 <Link
-                  to="/login"
+                  to="/restaurants/explore"
                   className="block px-3 py-2 text-base font-medium"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -458,7 +460,7 @@ const LandingPage = () => {
                 Order your favorite meals from local restaurants and get them delivered to your door in minutes.
               </p>
               <div className="mt-10 flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
-                <Link to={user ? "/login" : "/login"}>
+                <Link to={user ? "/restaurants/explore" : "/login"}>
                   <Button className="w-full sm:w-auto bg-[#FF4B3E] hover:bg-[#FF6B5E] text-white px-8 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all">
                     {user ? "Start Ordering" : "Get Started"} <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
@@ -611,7 +613,7 @@ const LandingPage = () => {
           <p className="text-xl mb-10 max-w-3xl mx-auto opacity-90">
             Join thousands of happy customers who use Foodie Pal every day to satisfy their cravings.
           </p>
-          <Link to={user ? "/login" : "/login"}>
+          <Link to={user ? "/restaurants/explore" : "/login"}>
             <Button className="bg-white text-[#FF4B3E] hover:bg-gray-100 px-10 py-6 text-lg rounded-full shadow-lg hover:shadow-xl transition-all">
               {user ? "Start Ordering" : "Get Started Now"} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>

@@ -158,10 +158,6 @@ const ExploreRestaurants = () => {
     applyFilters();
   }, [filters, allRestaurants]);
 
-  if (!user) return <Navigate to="/app" replace />;
-  if (user.role !== "customer")
-    return <Navigate to={`/${user.role}-dashboard`} replace />;
-
   const handleRestaurantClick = (id: string) => navigate(`/restaurants/${id}`);
 
   return (
