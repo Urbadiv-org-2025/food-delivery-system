@@ -26,7 +26,7 @@ router.post("/users/register", async (req, res) => {
 });
 router.get("/users", authenticate, restrictTo("admin"), async (req, res) => {
   try {
-    const response = await axios.get("http://localhost:3001/api/users");
+    const response = await axios.get("http://user-management-service:3001/api/users");
     res.json(response.data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -40,7 +40,7 @@ router.delete(
   async (req, res) => {
     try {
       const response = await axios.delete(
-        `http://localhost:3001/api/users/${req.params.id}`
+        `http://user-management-service:3001/api/users/${req.params.id}`
       );
 
       res.json(response.data);
@@ -59,7 +59,7 @@ router.put(
   async (req, res) => {
     try {
       const response = await axios.put(
-        `http://localhost:3001/api/users/${req.params.id}`,
+        `http://user-management-service:3001/api/users/${req.params.id}`,
         req.body
       );
       res.json(response.data);
@@ -71,7 +71,7 @@ router.put(
 router.post("/users/login", async (req, res) => {
   try {
     const response = await axios.post(
-      "http://localhost:3001/api/login",
+      "http://user-management-service:3001/api/login",
       req.body
     );
     res.json(response.data);
@@ -87,7 +87,7 @@ router.get(
   async (req, res) => {
     try {
       const response = await axios.get(
-        `http://localhost:3001/api/users/${req.params.id}`
+        `http://user-management-service:3001/api/users/${req.params.id}`
       );
       res.json(response.data);
     } catch (err) {
@@ -99,7 +99,7 @@ router.get(
 router.post("/admin/approve", async (req, res) => {
   try {
     const response = await axios.post(
-      "http://localhost:3001/api/admin/approve",
+      "http://user-management-service:3001/api/admin/approve",
       req.body
     );
     res.json(response.data);
@@ -249,7 +249,7 @@ router.delete(
 router.get("/menu/:id", async (req, res) => {
   try {
     const response = await axios.get(
-      `http://localhost:3002/api/menu/${req.params.id}`
+      `http://restaurant-management-service:3002/api/menu/${req.params.id}`
     );
     res.json(response.data);
   } catch (err) {
@@ -260,7 +260,7 @@ router.get("/menu/:id", async (req, res) => {
 router.get("/restaurants/:restaurantId/menu", async (req, res) => {
   try {
     const response = await axios.get(
-      `http://localhost:3002/api/restaurants/${req.params.restaurantId}/menu`
+      `http://restaurant-management-service:3002/api/restaurants/${req.params.restaurantId}/menu`
     );
     res.json(response.data);
   } catch (err) {
@@ -271,7 +271,7 @@ router.get("/restaurants/:restaurantId/menu", async (req, res) => {
 router.get("/restaurants/:restaurantId/menu/available", async (req, res) => {
   try {
     const response = await axios.get(
-      `http://localhost:3002/api/restaurants/${req.params.restaurantId}/menu/available`
+      `http://restaurant-management-service:3002/api/restaurants/${req.params.restaurantId}/menu/available`
     );
     res.json(response.data);
   } catch (err) {
@@ -287,7 +287,7 @@ router.put(
     try {
       // First verify if the restaurant belongs to this admin
       const response = await axios.get(
-        `http://localhost:3002/api/restaurants/${req.params.id}`
+        `http://restaurant-management-service:3002/api/restaurants/${req.params.id}`
       );
 
       const restaurant = response.data.data;
@@ -457,7 +457,7 @@ router.get(
   async (req, res) => {
     try {
       const response = await axios.get(
-        `http://localhost:3003/api/orders/${req.params.id}`
+        `http://order-management-service:3003/api/orders/${req.params.id}`
       );
       res.json(response.data);
     } catch (err) {
@@ -569,7 +569,7 @@ router.get(
   async (req, res) => {
     try {
       const { status } = req.query;
-      const response = await axios.get("http://localhost:3003/api/orders", {
+      const response = await axios.get("http://order-management-service:3003/api/orders", {
         params: { customerId: req.user.id, status },
       });
       res.json(response.data);
@@ -612,7 +612,7 @@ router.get(
   async (req, res) => {
     try {
       const response = await axios.get(
-        `http://localhost:3004/api/deliveries/${req.params.id}`
+        `http://delivery-management-service:3004/api/deliveries/${req.params.id}`
       );
       res.json(response.data);
     } catch (err) {
@@ -633,7 +633,7 @@ router.post(
           .status(400)
           .json({ error: "Amount, currency, and orderId required" });
       }
-      const response = await axios.post("http://localhost:3005/api/payments", {
+      const response = await axios.post("http://payment-service:3005/api/payments", {
         amount,
         currency,
         orderId,
@@ -657,7 +657,7 @@ router.post(
           .status(400)
           .json({ error: "Payment ID and orderId required" });
       }
-      const response = await axios.post("http://localhost:3005/api/refunds", {
+      const response = await axios.post("http://payment-service:3005/api/refunds", {
         paymentId,
         orderId,
       });
@@ -880,7 +880,7 @@ router.get("/restaurants/filter", async (req, res) => {
 
     // The restaurant service API has the structure /api/restaurants/filter
     const response = await axios.get(
-      "http://localhost:3002/api/restaurants/filter",
+      "http://restaurant-management-service:3002/api/restaurants/filter",
       { params }
     );
 
@@ -911,7 +911,7 @@ router.get("/restaurants/nearby", async (req, res) => {
     }
 
     const response = await axios.get(
-      "http://localhost:3002/api/restaurants/nearby",
+      "http://restaurant-management-service:3002/api/restaurants/nearby",
       {
         params: {
           latitude,
@@ -930,7 +930,7 @@ router.get("/restaurants/nearby", async (req, res) => {
 router.get("/restaurants/available", async (req, res) => {
   try {
     const response = await axios.get(
-      "http://localhost:3002/api/restaurants/available"
+      "http://restaurant-management-service:3002/api/restaurants/available"
     );
     res.json(response.data);
   } catch (err) {
@@ -945,7 +945,7 @@ router.get(
   async (req, res) => {
     try {
       const response = await axios.get(
-        `http://localhost:3002/api/restaurants/admin/${req.user.id}`
+        `http://restaurant-management-service:3002/api/restaurants/admin/${req.user.id}`
       );
       res.json(response.data);
     } catch (err) {
@@ -958,7 +958,7 @@ router.get(
 router.get("/restaurants/:id", async (req, res) => {
   try {
     const response = await axios.get(
-      `http://localhost:3002/api/restaurants/${req.params.id}`
+      `http://restaurant-management-service:3002/api/restaurants/${req.params.id}`
     );
     res.json(response.data);
   } catch (err) {
@@ -968,7 +968,7 @@ router.get("/restaurants/:id", async (req, res) => {
 
 router.get("/restaurants", async (req, res) => {
   try {
-    const response = await axios.get("http://localhost:3002/api/restaurants");
+    const response = await axios.get("http://restaurant-management-service:3002/api/restaurants");
     res.json(response.data);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1046,7 +1046,7 @@ router.get(
   async (req, res) => {
     try {
       const response = await axios.get(
-        `http://localhost:3004/api/deliveries/${req.params.id}`
+        `http://delivery-management-service:3004/api/deliveries/${req.params.id}`
       );
       res.json(response.data);
     } catch (err) {
@@ -1062,7 +1062,7 @@ router.get(
   async (req, res) => {
     try {
       const response = await axios.get(
-        `http://localhost:3004/api/deliveriesorder/${req.params.orderId}`
+        `http://delivery-management-service:3004/api/deliveriesorder/${req.params.orderId}`
       );
       res.json(response.data);
     } catch (err) {
@@ -1078,7 +1078,7 @@ router.get(
   async (req, res) => {
     try {
       const response = await axios.get(
-        `http://localhost:3004/api/deliveriesdriver/${req.params.driverId}`
+        `http://delivery-management-service:3004/api/deliveriesdriver/${req.params.driverId}`
       );
       res.json(response.data);
     } catch (err) {
@@ -1094,7 +1094,7 @@ router.get(
   async (req, res) => {
     try {
       const response = await axios.get(
-        `http://localhost:3004/api/deliveriesdriver/current/${req.params.driverId}`
+        `http://delivery-management-service:3004/api/deliveriesdriver/current/${req.params.driverId}`
       );
       res.json(response.data);
     } catch (err) {
@@ -1138,7 +1138,7 @@ router.post(
     try {
       console.log(req.body);
       const response = await axios.post(
-        "http://localhost:3005/api/payments",
+        "http://payment-service:3005/api/payments",
         req.body
       );
       res.json(response.data);
@@ -1155,7 +1155,7 @@ router.post(
   async (req, res) => {
     try {
       const response = await axios.post(
-        "http://localhost:3005/api/refunds",
+        "http://payment-service:3005/api/refunds",
         req.body
       );
       res.json(response.data);
