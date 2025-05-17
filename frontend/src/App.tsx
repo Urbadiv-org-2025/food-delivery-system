@@ -26,12 +26,15 @@ import ExploreRestaurants from "./pages/ExploreRestaurants";
 import RestaurantDetailsClient from "./pages/RestaurantDetailsClient";
 import RestaurantMenus from "./pages/RestaurantMenus";
 import RestaurantOrders from "./pages/RestaurantOrders";
+import { CartProvider } from "./context/CartContext";
+import CartPage from "./pages/CartPage";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
+      <CartProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -53,6 +56,7 @@ const App = () => (
             <Route path="/restaurant/menus" element={<RestaurantMenus />} />
             <Route path="/restaurant/orders" element={<RestaurantOrders />} />
             <Route path="/restaurants/:restaurantId/menu/:id/edit" element={<EditMenuItem />} />
+            <Route path="/cart" element={<CartPage />} />
             <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             {/* <Route path="/admin-dashboard" element={<div>Admin Dashboard</div>} /> */}
@@ -65,6 +69,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </CartProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
