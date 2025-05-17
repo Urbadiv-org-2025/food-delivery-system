@@ -46,9 +46,19 @@ export const AuthProvider = ({ children }) => {
         }
       );
 
-      setUser(response.data.user);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-      localStorage.setItem("token", response.data.token);
+      // Decode the token to get user role
+      const token = response.data.token;
+      const tokenPayload = JSON.parse(atob(token.split(".")[1]));
+
+      const userData = {
+        ...response.data.user,
+        role: tokenPayload.role, // Make sure the role is included
+      };
+
+      setUser(userData);
+      localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("token", token);
+      localStorage.setItem("userRole", tokenPayload.role); // Store role separately if needed
     } catch (error) {
       console.error("Login error:", error);
       throw error;

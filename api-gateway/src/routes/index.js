@@ -973,6 +973,34 @@ router.get(
   }
 );
 
+// Add this new route
+router.get(
+  "/admin/restaurants/all",
+  authenticate,
+  restrictTo("admin"),
+  async (req, res) => {
+    try {
+      console.log("Fetching all restaurants"); // Debug log
+      const response = await axios.get(
+        "http://localhost:3002/api/restaurants/all",
+        {
+          headers: {
+            Authorization: req.headers.authorization,
+          },
+        }
+      );
+      console.log("Response from restaurant service:", response.data); // Debug log
+      res.json(response.data);
+    } catch (error) {
+      console.error("Error in /admin/restaurants/all:", error);
+      res.status(500).json({
+        error: "Failed to fetch restaurants",
+        details: error.message,
+      });
+    }
+  }
+);
+
 // Keep the existing routes for getting restaurants
 router.get("/restaurants/:id", async (req, res) => {
   try {
@@ -1004,8 +1032,11 @@ router.put(
       await producer.connect();
       const approvalData = {
         id: req.params.id,
-        adminAccept: true,
+        adminAccept: req.body.adminAccept, // Add this line to handle both approve/reject
+        available: req.body.adminAccept, // Set availability based on approval
       };
+
+      console.log("Sending approval data:", approvalData); // Debug log
 
       await producer.send({
         topic: "restaurant-events",
@@ -1021,12 +1052,18 @@ router.put(
 
       await producer.disconnect();
       res.json({
-        message: "Restaurant approval request sent",
+        success: true,
+        message: `Restaurant ${
+          req.body.adminAccept ? "approved" : "rejected"
+        } successfully`,
         data: approvalData,
       });
     } catch (err) {
-      console.error("Error approving restaurant:", err);
-      res.status(500).json({ error: err.message });
+      console.error("Error approving/rejecting restaurant:", err);
+      res.status(500).json({
+        success: false,
+        error: err.message,
+      });
     }
   }
 );

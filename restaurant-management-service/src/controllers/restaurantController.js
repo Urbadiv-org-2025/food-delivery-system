@@ -299,8 +299,13 @@ const runConsumer = async () => {
             case "admin_approve":
               try {
                 const { id, available } = restaurantData;
+
+                // Fix: Convert string ID to MongoDB ObjectId if needed
+                const mongoId = id; // Use the ID directly - it should be the MongoDB _id
+
+                // Change the query to find by _id instead of id
                 const updatedRestaurant = await Restaurant.findOneAndUpdate(
-                  { id },
+                  { _id: mongoId }, // Changed from { id } to { _id: mongoId }
                   {
                     adminAccept: true,
                     available: available !== undefined ? available : true,
@@ -309,12 +314,12 @@ const runConsumer = async () => {
                 );
 
                 if (!updatedRestaurant) {
-                  console.error(`Restaurant not found with id: ${id}`);
+                  console.error(`Restaurant not found with _id: ${mongoId}`);
                   break;
                 }
 
                 console.log(
-                  `Restaurant approved and availability updated: ${id}`
+                  `Restaurant approved and availability updated: ${mongoId}`
                 );
               } catch (error) {
                 console.error("Error in restaurant approval:", error);
@@ -551,6 +556,33 @@ const getRestaurantsByAdminId = async (req, res) => {
   }
 };
 
+const getAllRestaurantsAdmin = async (req, res) => {
+  try {
+    const restaurants = await Restaurant.find({})
+      .select(
+        "_id id name location cuisine rating openingHours available adminAccept restaurantAdminId"
+      )
+      .lean();
+
+    const formattedRestaurants = restaurants.map((restaurant) => ({
+      ...restaurant,
+      id: restaurant._id.toString() || restaurant.id, // Ensure we have an id field
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: formattedRestaurants,
+    });
+  } catch (error) {
+    console.error("Error fetching all restaurants:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch restaurants",
+      details: error.message,
+    });
+  }
+};
+
 module.exports = {
   runConsumer,
   getRestaurantById,
@@ -562,4 +594,5 @@ module.exports = {
   getFilteredRestaurants,
   getNearbyRestaurants,
   getRestaurantsByAdminId,
+  getAllRestaurantsAdmin,
 };
