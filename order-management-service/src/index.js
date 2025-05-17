@@ -1,51 +1,3 @@
-// const express = require('express');
-// const dotenv = require('dotenv');
-// const http = require('http');
-// const { Server } = require('socket.io');
-// dotenv.config();
-// const routes = require('./routes');
-// const { runConsumer } = require('./controllers/orderController');
-//
-// const app = express();
-// const server = http.createServer(app);
-// const io = new Server(server, {
-//     cors: {
-//         origin: '*', // Allow frontend origin
-//         methods: ['GET', 'POST']
-//     }
-// });
-//
-// app.use(express.json());
-// app.use('/api', routes);
-//
-// // Log Socket.IO connections and room joins
-// io.on('connection', (socket) => {
-//     console.log(`Socket.IO client connected: ${socket.id}`);
-//     socket.on('joinOrderRoom', (room) => {
-//         socket.join(room);
-//         console.log(`Client ${socket.id} joined room ${room}`);
-//         io.to(`order:${room}`).emit('orderUpdate', {
-//             orderId: room,
-//             status: 'confirmed',
-//             message: 'Order confirmed successfully'
-//         });
-//     });
-//     socket.on('joinRestaurantRoom', (room) => {
-//         socket.join(room);
-//         console.log(`Client ${socket.id} joined room ${room}`);
-//     });
-//     socket.on('disconnect', () => {
-//         console.log(`Socket.IO client disconnected: ${socket.id}`);
-//     });
-// });
-//
-// // Start Kafka consumer with io instance
-// runConsumer(io).catch(console.error);
-//
-// server.listen(3003, () => {
-//     console.log('Order Management Service running on port 3003');
-// });
-
 const express = require('express');
 const dotenv = require('dotenv');
 const http = require('http');
@@ -117,24 +69,19 @@ io.on('connection', (socket) => {
             socket.join(`restaurant:${room}`);
             console.log(`Client ${socket.id} joined room restaurant:${room}`);
 
-            // Fetch all orders for the restaurant
-            const orders = await Order.find({ restaurantId: room });
-            if (!orders || orders.length === 0) {
-                console.log(`No orders found for restaurant: ${room}`);
-                socket.emit('orderUpdate', {
-                    restaurantId: room,
-                    message: 'No active orders for this restaurant'
-                });
-                return;
-            }
-
-            // Emit orderUpdate for each order
-            orders.forEach((order) => {
-                io.to(`restaurant:${room}`).emit('orderUpdate', {
+            // Fetch all orders for the restaurant, sorted by id (newest first)
+            const orders = await Order.find({ restaurantId: room }).sort({ id: -1 });
+            io.to(`restaurant:${room}`).emit('orderUpdate', {
+                restaurantId: room,
+                orders: orders.map(order => ({
                     orderId: order.id,
                     status: order.status,
-                    message: statusMessages[order.status] || `Order status: ${order.status}`
-                });
+                    message: statusMessages[order.status] || `Order status: ${order.status}`,
+                    customerId: order.customerId,
+                    items: order.items,
+                    total: order.total
+                })),
+                message: orders.length > 0 ? 'Updated restaurant orders' : 'No active orders for this restaurant'
             });
         } catch (error) {
             console.error(`Error fetching orders for restaurant ${room}:`, error);

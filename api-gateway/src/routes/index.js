@@ -96,6 +96,18 @@ router.get(
   }
 );
 
+router.post("/admin/approve", async (req, res) => {
+  try {
+    const response = await axios.post(
+      "http://localhost:3001/api/admin/approve",
+      req.body
+    );
+    res.json(response.data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.post(
   "/menu",
   authenticate,
@@ -457,7 +469,7 @@ router.get(
 router.post(
   "/orders/:id/prepare",
   authenticate,
-  restrictTo("restaurant_admin"),
+  restrictTo("restaurant_admin","delivery_personnel"),
   async (req, res) => {
     try {
       await producer.connect();
@@ -483,11 +495,11 @@ router.post(
 router.post(
   "/orders/:id/ready",
   authenticate,
-  restrictTo("restaurant_admin"),
+  restrictTo("restaurant_admin","delivery_personnel"),
   async (req, res) => {
     try {
       await producer.connect();
-      const orderData = { id: req.params.id, restaurantId: req.user.id };
+      const orderData = { id: req.params.id, restaurantId: req.user.id, longitude: req.body.longitude , latitude: req.body.latitude};
       await producer.send({
         topic: "order-events",
         messages: [
@@ -1153,31 +1165,31 @@ router.post(
   }
 );
 
-router.post(
-  "/notifications",
-  authenticate,
-  restrictTo("admin"),
-  async (req, res) => {
-    try {
-      await producer.connect();
-      const notificationData = { ...req.body, id: Date.now().toString() };
-      await producer.send({
-        topic: "notification-events",
-        messages: [
-          {
-            value: JSON.stringify({
-              action: req.body.action,
-              data: notificationData,
-            }),
-          },
-        ],
-      });
-      await producer.disconnect();
-      res.status(201).json({ message: "Notification request sent" });
-    } catch (err) {
-      res.status(500).json({ error: err.message });
-    }
-  }
-);
+// router.post(
+//   "/notifications",
+//   authenticate,
+//   restrictTo("admin"),
+//   async (req, res) => {
+//     try {
+//       await producer.connect();
+//       const notificationData = { ...req.body, id: Date.now().toString() };
+//       await producer.send({
+//         topic: "notification-events",
+//         messages: [
+//           {
+//             value: JSON.stringify({
+//               action: req.body.action,
+//               data: notificationData,
+//             }),
+//           },
+//         ],
+//       });
+//       await producer.disconnect();
+//       res.status(201).json({ message: "Notification request sent" });
+//     } catch (err) {
+//       res.status(500).json({ error: err.message });
+//     }
+//   }
+// );
 
 module.exports = router;

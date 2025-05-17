@@ -26,7 +26,7 @@ const runConsumer = async () => {
     await consumer.run({
         eachMessage: async ({ message }) => {
             const { action, data } = JSON.parse(message.value);
-            const { email, phoneNumber, status } = data.data;
+            const { email, phoneNumber, status } = data;
             console.log(action, data);
             
 
@@ -36,7 +36,7 @@ const runConsumer = async () => {
                     from: process.env.GMAIL_USER,
                     to: email, // Client's email
                     subject: 'Package Status Update',
-                    text: `Dear Customer, your package status is: ${status}`,
+                    text: `${status}`,
                 };
 
                 try {
@@ -48,9 +48,9 @@ const runConsumer = async () => {
 
                 try {
                     await twilioClient.messages.create({
-                        body: `Dear Customer, your package status is: ${status}`,
+                        body: `${status}`,
                         from: process.env.TWILIO_PHONE_NUMBER,
-                        to: phoneNumber, // Client's phone number
+                        to: phoneNumber || '+94778889560', // Client's phone number
                     });
                     console.log(`SMS sent to client: ${phoneNumber}`);
                 } catch (error) {

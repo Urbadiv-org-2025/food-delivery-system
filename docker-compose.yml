@@ -23,85 +23,84 @@ services:
     ports:
       - "9092:9092"
 
-  # mongodb:
-  #   image: mongo:latest
-  #   ports:
-  #     - "27017:27017"
-  #   volumes:
-  #     - mongodb_data:/data/db
-
   # api-gateway:
   #   build: ./api-gateway
   #   ports:
   #     - "3000:3000"
   #   environment:
   #     - KAFKA_BROKER=kafka:9092
-  #     - JWT_SECRET=your_jwt_secret
+  #     - JWT_SECRET=ad07305c28789206693fb80b4f137c083ef0121925a484e8c3c2a5a1b78ca8bb
   #   depends_on:
   #     - kafka
-  #     - mongodb
 
   # user-management-service:
   #   build: ./user-management-service
+  #   ports:
+  #     - "3001:3001"
   #   environment:
   #     - KAFKA_BROKER=kafka:9092
-  #     - MONGO_URI=mongodb://mongodb:27017/user_db
+  #     - JWT_SECRET=ad07305c28789206693fb80b4f137c083ef0121925a484e8c3c2a5a1b78ca8bb
+  #     - MONGO_URI="mongodb+srv://user:user@cluster0.uonoawp.mongodb.net/user-service?retryWrites=true&w=majority&appName=Cluster0"
   #   depends_on:
   #     - kafka
-  #     - mongodb
 
   # restaurant-management-service:
   #   build: ./restaurant-management-service
+  #   ports:
+  #     - "3002:3002"
   #   environment:
   #     - KAFKA_BROKER=kafka:9092
-  #     - MONGO_URI=mongodb://mongodb:27017/restaurant_db
+  #     - MONGO_URI="mongodb+srv://vishwakaushalya2003:vishwa2003@cluster0.xfi4t.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
   #   depends_on:
   #     - kafka
-  #     - mongodb
 
   # order-management-service:
   #   build: ./order-management-service
+  #   ports:
+  #     - "3003:3003"
   #   environment:
   #     - KAFKA_BROKER=kafka:9092
-  #     - MONGO_URI=mongodb://mongodb:27017/order_db
+  #     - MONGO_URI="mongodb+srv://dineth550:20021213@studentms.q45in7h.mongodb.net/order_db"
   #   depends_on:
   #     - kafka
-  #     - mongodb
 
   # delivery-management-service:
   #   build: ./delivery-management-service
+  #   ports:
+  #     - "3004:3004"
   #   environment:
   #     - KAFKA_BROKER=kafka:9092
-  #     - MONGO_URI=mongodb://mongodb:27017/delivery_db
+  #     - MONGO_URI="mongodb+srv://user:user@cluster0.uonoawp.mongodb.net/user-service?retryWrites=true&w=majority&appName=Cluster0"
   #   depends_on:
   #     - kafka
-  #     - mongodb
 
   # payment-service:
   #   build: ./payment-service
+  #   ports:
+  #     - "3005:3005"
   #   environment:
   #     - KAFKA_BROKER=kafka:9092
-  #     - STRIPE_SECRET_KEY=your_stripe_secret_key
+  #     - STRIPE_SECRET_KEY=sk_test_51Qe7HeA97EM7XCbcspqvSrF0TQsK7tbt13Qs0KktLHkGB4b1HONCqEueeMUTThJrVwIMAF2K2p5lVVVAOxksk4CK0026Ull7bJ
   #   depends_on:
   #     - kafka
 
   # notification-service:
   #   build: ./notification-service
+  #   ports:
+  #     - "3006:3006"
   #   environment:
   #     - KAFKA_BROKER=kafka:9092
-  #     - TWILIO_ACCOUNT_SID=your_twilio_account_sid
-  #     - TWILIO_AUTH_TOKEN=your_twilio_auth_token
-  #     - TWILIO_PHONE_NUMBER=your_twilio_phone_number
-  #     - SENDGRID_API_KEY=your_sendgrid_api_key
+  #     - TWILIO_PHONE_NUMBER=+19704108950
+  #     - TWILIO_ACCOUNT_SID=ACf28ed73f804ac5ce3dad2e2a6b9add05
+  #     - TWILIO_AUTH_TOKEN=77ddb186ed08276331921b4f81490683
+  #     - GMAIL_USER=udereats45@gmail.com
+  #     - GMAIL_PASSWORD=jcwc pcyn ngye ojie
   #   depends_on:
   #     - kafka
 
-#  frontend:
-#    build: ./frontend
-#    ports:
-#      - "3001:3000"
-#    depends_on:
-#      - api-gateway
-
-# volumes:
-#   mongodb_data:
+  # frontend:
+  #   build: ./frontend
+  #   ports:
+  #     - "8080:8080"
+  #   depends_on:
+  #     - api-gateway

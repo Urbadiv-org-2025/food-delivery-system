@@ -43,8 +43,9 @@ const App = () => (
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/app" element={<Index />} />
-            <Route path="/login" element={<Navigate to="/app" replace />} />
+            <Route path="/login" element={<Navigate to="/restaurants/explore" replace />} />
             <Route path="/restaurants/explore" element={<ExploreRestaurants />} />
+            {/* <Route path="/delivery_personnel-dashboard" element={<div>Delivery Dashboard</div>} /> */}
             <Route path="/restaurant_admin-dashboard" element={<RestaurantDashboard />} />
             <Route path="/restaurants/:id" element={<RestaurantDetailsClient />} />
             <Route path="/restaurant/:id" element={<RestaurantDetails />} />
@@ -58,9 +59,12 @@ const App = () => (
             <Route path="/cart" element={<CartPage />} />
             <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
+            {/* <Route path="/admin-dashboard" element={<div>Admin Dashboard</div>} /> */}
+            <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard/>} />
             <Route path="/admin/restaurants" element={<VerifyRestaurantRegistration />} />
             <Route path="/admin/profiles" element={<ManageUsers />} />
-            <Route path="/customer-tracking" element={<CustomerTrackingPage deliveryId={"456"} />} />
+            <Route path="/customer-tracking/:deliveryId" element={<CustomerTrackingPage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
