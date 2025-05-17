@@ -5,11 +5,23 @@ import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { RestaurantCard } from "./restaurants/RestaurantCard";
 import RestaurantAdminNavigation from "@/components/RestaurantAdminNavigation";
+import { useState, useEffect } from "react";
 
 const RestaurantDashboard = () => {
   const { user, logout, isLoading: authLoading } = useAuth();
-  const { restaurants, isLoading, error } = useRestaurants();
+  const {
+    restaurants: initialRestaurants,
+    isLoading,
+    error,
+  } = useRestaurants();
+  const [restaurants, setRestaurants] = useState(initialRestaurants || []);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (initialRestaurants) {
+      setRestaurants(initialRestaurants);
+    }
+  }, [initialRestaurants]);
 
   // Show loading state
   if (authLoading) {
@@ -17,13 +29,26 @@ const RestaurantDashboard = () => {
   }
 
   // Protect the route
-  if (!user || user.role !== 'restaurant_admin') {
+  if (!user || user.role !== "restaurant_admin") {
     return <Navigate to="/login" replace />;
   }
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
+  };
+
+  const handleAvailabilityChange = (
+    restaurantId: string,
+    available: boolean
+  ) => {
+    setRestaurants((prevRestaurants) =>
+      prevRestaurants.map((restaurant) =>
+        restaurant.id === restaurantId
+          ? { ...restaurant, available }
+          : restaurant
+      )
+    );
   };
 
   return (
@@ -41,7 +66,6 @@ const RestaurantDashboard = () => {
                 <PlusCircle className="w-4 h-4 mr-2" />
                 New Restaurant
               </Button>
-              
             </div>
           </div>
 
@@ -54,6 +78,9 @@ const RestaurantDashboard = () => {
                 key={restaurant.id}
                 restaurant={restaurant}
                 onClick={() => navigate(`/restaurant/${restaurant.id}`)}
+                onAvailabilityChange={(available) =>
+                  handleAvailabilityChange(restaurant.id, available)
+                }
               />
             ))}
           </div>

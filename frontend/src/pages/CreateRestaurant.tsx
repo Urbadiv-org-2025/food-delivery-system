@@ -4,7 +4,13 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import GoogleMapPicker from "@/components/ui/GoogleMapPicker";
 import { TimePicker } from "@/components/ui/time-picker";
@@ -12,8 +18,17 @@ import { loadGoogleMapsScript } from "@/lib/googleMaps";
 import RestaurantAdminNavigation from "@/components/RestaurantAdminNavigation";
 
 const cuisineOptions = [
-  "Italian", "Chinese", "Indian", "Mexican", "American",
-  "French", "Japanese", "Mediterranean", "Thai", "Spanish", "Srilankan"
+  "Italian",
+  "Chinese",
+  "Indian",
+  "Mexican",
+  "American",
+  "French",
+  "Japanese",
+  "Mediterranean",
+  "Thai",
+  "Spanish",
+  "Srilankan",
 ];
 
 const CreateRestaurant = () => {
@@ -31,7 +46,9 @@ const CreateRestaurant = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isMapLoaded, setIsMapLoaded] = useState(false);
 
-  const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "AIzaSyA9azTdCHv4RBAQms7mYHlew9TfATz56-E";
+  const GOOGLE_MAPS_API_KEY =
+    import.meta.env.VITE_GOOGLE_MAPS_API_KEY ||
+    "AIzaSyAjt-GCTto9WtDApGDNMGD1wkppIli-pHA";
 
   useEffect(() => {
     const loadMaps = async () => {
@@ -49,12 +66,20 @@ const CreateRestaurant = () => {
     e.preventDefault();
 
     if (!name || !selectedCuisine || !openingHours || !location.address) {
-      toast({ title: "Error", description: "Please fill all required fields", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Please fill all required fields",
+        variant: "destructive",
+      });
       return;
     }
 
     if (!image) {
-      toast({ title: "Error", description: "Please upload an image", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Please upload an image",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -83,11 +108,18 @@ const CreateRestaurant = () => {
         }
       );
 
-      toast({ title: "Success", description: "Restaurant created successfully!" });
+      toast({
+        title: "Success",
+        description: "Restaurant created successfully!",
+      });
       navigate("/restaurant_admin-dashboard");
     } catch (error) {
       console.error("Create error:", error);
-      toast({ title: "Error", description: "Failed to create restaurant", variant: "destructive" });
+      toast({
+        title: "Error",
+        description: "Failed to create restaurant",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +170,11 @@ const CreateRestaurant = () => {
           <div className="space-y-2">
             <label>Location</label>
             {isMapLoaded ? (
-              <GoogleMapPicker location={location} setLocation={setLocation} initialLoad={true} />
+              <GoogleMapPicker
+                location={location}
+                setLocation={setLocation}
+                initialLoad={true}
+              />
             ) : (
               <div className="p-4 bg-gray-50 border border-gray-200 rounded-md text-center">
                 <p>Loading map...</p>
@@ -148,7 +184,12 @@ const CreateRestaurant = () => {
 
           <div className="space-y-2">
             <label>Upload Restaurant Image</label>
-            <Input type="file" onChange={(e) => setImage(e.target.files?.[0] || null)} accept="image/*" required />
+            <Input
+              type="file"
+              onChange={(e) => setImage(e.target.files?.[0] || null)}
+              accept="image/*"
+              required
+            />
           </div>
 
           <Button
