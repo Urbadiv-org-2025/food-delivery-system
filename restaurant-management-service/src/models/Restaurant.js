@@ -43,4 +43,12 @@ const restaurantSchema = new mongoose.Schema({
   },
 });
 
+// Middleware to sync `adminAccept` with `available`
+restaurantSchema.pre("save", function (next) {
+  if (this.isModified("available")) {
+    this.adminAccept = this.available;
+  }
+  next();
+});
+
 module.exports = mongoose.model("Restaurant", restaurantSchema);
