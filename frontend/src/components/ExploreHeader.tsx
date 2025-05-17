@@ -1,16 +1,17 @@
 import { Link, NavLink } from "react-router-dom";
-import { Menu, X, ShoppingCart } from "lucide-react";
+import { Menu, X, ShoppingCart, History } from "lucide-react"; // Add History icon
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom"; // Add useNavigate
 
 const ExploreHeader = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-
   const { logout } = useAuth();
   const { cart } = useCart();
+  const navigate = useNavigate(); // Initialize navigate
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
@@ -22,6 +23,9 @@ const ExploreHeader = () => {
 
           {/* Desktop Buttons */}
           <div className="hidden md:flex items-center gap-4">
+            <NavLink to="/history" className="relative">
+              <History className="w-6 h-6 text-gray-700 hover:text-[#FF4B3E]" />
+            </NavLink>
             <NavLink to="/cart" className="relative">
               <ShoppingCart className="w-6 h-6 text-gray-700 hover:text-[#FF4B3E]" />
               {totalItems > 0 && (
@@ -60,10 +64,19 @@ const ExploreHeader = () => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden px-5py-3 bg-white shadow-lg space-y-2">
+        <div className="md:hidden px-5 py-3 bg-white shadow-lg space-y-2">
+          <NavLink
+            to="/history"
+            className="flex items-center gap-2 text-gray-700 hover:text-[#FF4B3E]"
+            onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
+          >
+            <History className="w-5 h-5" />
+            Order History
+          </NavLink>
           <NavLink
             to="/cart"
             className="flex items-center gap-2 text-gray-700 hover:text-[#FF4B3E]"
+            onClick={() => setIsMobileMenuOpen(false)} // Close menu on click
           >
             <ShoppingCart className="w-5 h-5" />
             Cart ({totalItems})
@@ -74,6 +87,7 @@ const ExploreHeader = () => {
             onClick={() => {
               logout();
               window.location.href = "/";
+              setIsMobileMenuOpen(false); // Close menu on sign out
             }}
           >
             Sign Out

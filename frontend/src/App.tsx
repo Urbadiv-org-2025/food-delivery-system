@@ -28,6 +28,7 @@ import RestaurantMenus from "./pages/RestaurantMenus";
 import RestaurantOrders from "./pages/RestaurantOrders";
 import { CartProvider } from "./context/CartContext";
 import CartPage from "./pages/CartPage";
+import HistoryPage from "@/components/HistoryPage";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/app" element={<Index />} />
             <Route path="/login" element={<Navigate to="/restaurants/explore" replace />} />
             <Route path="/restaurants/explore" element={<ExploreRestaurants />} />
+            <Route path="/history" element={<HistoryPage />} />
             {/* <Route path="/delivery_personnel-dashboard" element={<div>Delivery Dashboard</div>} /> */}
             <Route path="/restaurant_admin-dashboard" element={<RestaurantDashboard />} />
             <Route path="/restaurants/:id" element={<RestaurantDetailsClient />} />
@@ -54,14 +56,14 @@ const App = () => (
             <Route path="/restaurants/:id/menu/new" element={<CreateMenuItem />} />
             <Route path="/restaurants/:restaurantId/menu/:id" element={<MenuDetails />} />
             <Route path="/restaurant/menus" element={<RestaurantMenus />} />
-            <Route path="/restaurant/orders" element={<RestaurantOrders />} />
+            {/* <Route path="/restaurant/orders" element={<RestaurantOrders />} /> */}
             <Route path="/restaurants/:restaurantId/menu/:id/edit" element={<EditMenuItem />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
             {/* <Route path="/admin-dashboard" element={<div>Admin Dashboard</div>} /> */}
             <Route path="/delivery_personnel-dashboard" element={<DeliveryDashboard />} />
-            <Route path="/admin-dashboard" element={<AdminDashboard/>} />
+            {/* <Route path="/admin-dashboard" element={<AdminDashboard/>} /> */}
             <Route path="/admin/restaurants" element={<VerifyRestaurantRegistration />} />
             <Route path="/admin/profiles" element={<ManageUsers />} />
             <Route path="/customer-tracking/:deliveryId" element={<CustomerTrackingPage />} />

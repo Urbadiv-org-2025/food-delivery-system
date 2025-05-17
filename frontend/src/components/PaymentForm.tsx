@@ -187,7 +187,7 @@ const CheckoutForm = ({ order, onPaymentComplete }: PaymentFormProps) => {
               <div className="text-red-500 text-sm">{paymentError}</div>
           )}
 
-          <div className="text-sm text-gray-500">
+          {/* <div className="text-sm text-gray-500">
             <p className="mb-2">Test with Stripe test cards:</p>
             <ul className="list-disc pl-4">
               <li>Success: 4242 4242 4242 4242</li>
@@ -195,7 +195,7 @@ const CheckoutForm = ({ order, onPaymentComplete }: PaymentFormProps) => {
               <li>Decline: 4000 0000 0000 9995</li>
             </ul>
             <p className="mt-2">Use any future date, any 3 digits for CVC, and any postal code.</p>
-          </div>
+          </div> */}
 
           <Button
               type="submit"

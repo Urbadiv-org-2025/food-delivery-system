@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { CartItem, useCart } from "@/context/CartContext";
+import ExploreHeader from "@/components/ExploreHeader";
 
 const categoryOptions = ["appetizer", "main-course", "dessert", "beverage"];
 type Dietary = "vegetarian" | "vegan" | "Non-Veg" | "nut-free";
@@ -122,6 +123,7 @@ const RestaurantDetailsClient = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-8">
+      <ExploreHeader />
       {/* Hero */}
       <div className="rounded-xl overflow-hidden h-[300px]">
         <img

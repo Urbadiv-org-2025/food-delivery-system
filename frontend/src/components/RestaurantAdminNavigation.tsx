@@ -44,18 +44,7 @@ const RestaurantAdminNavigation: React.FC = () => {
             Menus
           </NavLink>
         </li>
-        <li>
-          <NavLink
-            to="/restaurant/orders"
-            className={({ isActive }) =>
-              `block px-4 py-2 hover:bg-gray-700 ${
-                isActive ? "bg-gray-700" : ""
-              }`
-            }
-          >
-            Orders
-          </NavLink>
-        </li>
+        
       </ul>
       <div className="p-4 border-t border-gray-700">
         <div className="mb-2 text-sm text-gray-400">

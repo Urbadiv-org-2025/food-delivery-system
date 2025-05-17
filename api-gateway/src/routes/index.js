@@ -543,7 +543,7 @@ router.post(
 router.post(
   "/orders/:id/deliver",
   authenticate,
-  restrictTo("delivery_personnel"),
+  restrictTo("customer"),
   async (req, res) => {
     try {
       await producer.connect();

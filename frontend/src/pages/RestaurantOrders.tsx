@@ -17,6 +17,11 @@ type Order = {
   customerEmail?: string; // Optional, assuming it's available from backend
 };
 
+interface RestaurantOrdersProps {
+    restaurantId: string;
+    location: { latitude: number; longitude: number };
+  }
+
 const statusColors: Record<OrderStatus, string> = {
   pending: "bg-yellow-200 text-yellow-800",
   confirmed: "bg-blue-200 text-blue-800",
@@ -26,13 +31,13 @@ const statusColors: Record<OrderStatus, string> = {
   canceled: "bg-red-400 text-white",
 };
 
-const RestaurantOrders: React.FC = () => {
+const RestaurantOrders: React.FC<RestaurantOrdersProps> = ({ restaurantId, location }) => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [socket, setSocket] = useState<Socket | null>(null);
-  const restaurantId = "restaurant_123"; // Replace with dynamic restaurant ID if needed
+  // const restaurantId = "restaurant_123"; 
   const apiBaseUrl = 'http://localhost:3000/api'; // Adjust if your API base URL is different
   // Assume these are available (e.g., from restaurant data or context)
-  const restaurantLocation = { longitude: 79.8612, latitude: 6.9271 }; // Example coordinates (Colombo, Sri Lanka)
+  const restaurantLocation = { longitude: location.longitude, latitude: location.latitude }; 
 
   useEffect(() => {
     // Initialize Socket.IO connection
@@ -147,7 +152,6 @@ const RestaurantOrders: React.FC = () => {
 
   return (
       <div className="flex min-h-screen">
-        <RestaurantAdminNavigation />
         <div className="flex-1 p-6 bg-gray-50">
           <div className="max-w-7xl mx-auto">
             <h1 className="text-3xl font-bold mb-6">Restaurant Orders</h1>
