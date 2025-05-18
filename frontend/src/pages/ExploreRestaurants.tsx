@@ -53,7 +53,8 @@ const ExploreRestaurants = () => {
       setLoading(true);
       const res = await fetch(`http://localhost:3002/api/restaurants`);
       const data = await res.json();
-      setAllRestaurants(data.data || []);
+      const availableRestaurants = data.data?.filter(restaurant => restaurant.available === true) || [];
+      setAllRestaurants(availableRestaurants);
       setFilteredRestaurants(data.data || []);
     } catch (error) {
       console.error("Failed to fetch restaurants:", error);
