@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.33.0 (3ce457399)
+  labels:
+    io.kompose.service: payment-service
+  name: payment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: payment-service
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.33.0 (3ce457399)
+      labels:
+        io.kompose.network/kompose-default: "true"
+        io.kompose.service: payment-service
+    spec:
+      containers:
+        - env:
+            - name: KAFKA_BROKER
+              value: kafka:9092
+            - name: STRIPE_SECRET_KEY
+              value: sk_test_51Qe7HeA97EM7XCbcspqvSrF0TQsK7tbt13Qs0KktLHkGB4b1HONCqEueeMUTThJrVwIMAF2K2p5lVVVAOxksk4CK0026Ull7bJ
+          image: us-central1-docker.pkg.dev/food-delivery-system-458116/my-repo/payment-service:latest
+          name: payment-service
+          ports:
+            - containerPort: 3005
+              protocol: TCP
+      restartPolicy: Always

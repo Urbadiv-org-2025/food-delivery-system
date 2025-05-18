@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.33.0 (3ce457399)
+  labels:
+    io.kompose.service: notification-service
+  name: notification-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: notification-service
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.33.0 (3ce457399)
+      labels:
+        io.kompose.network/kompose-default: "true"
+        io.kompose.service: notification-service
+    spec:
+      containers:
+        - env:
+            - name: GMAIL_PASSWORD
+              value: jcwc pcyn ngye ojie
+            - name: GMAIL_USER
+              value: udereats45@gmail.com
+            - name: KAFKA_BROKER
+              value: kafka:9092
+            - name: TWILIO_ACCOUNT_SID
+              value: ACf28ed73f804ac5ce3dad2e2a6b9add05
+            - name: TWILIO_AUTH_TOKEN
+              value: 77ddb186ed08276331921b4f81490683
+            - name: TWILIO_PHONE_NUMBER
+              value: "+19704108950"
+          image: us-central1-docker.pkg.dev/food-delivery-system-458116/my-repo/notification-service:latest
+          name: notification-service
+          ports:
+            - containerPort: 3006
+              protocol: TCP
+      restartPolicy: Always

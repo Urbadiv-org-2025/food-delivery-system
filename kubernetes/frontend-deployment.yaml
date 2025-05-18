@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.33.0 (3ce457399)
+  labels:
+    io.kompose.service: frontend
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: frontend
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.33.0 (3ce457399)
+      labels:
+        io.kompose.network/kompose-default: "true"
+        io.kompose.service: frontend
+    spec:
+      containers:
+        - image: us-central1-docker.pkg.dev/food-delivery-system-458116/my-repo/frontend:latest
+          name: frontend
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+      restartPolicy: Always

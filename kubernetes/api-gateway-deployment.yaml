@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.33.0 (3ce457399)
+  labels:
+    io.kompose.service: api-gateway
+  name: api-gateway
+spec:
+  replicas: 0
+  selector:
+    matchLabels:
+      io.kompose.service: api-gateway
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.33.0 (3ce457399)
+      labels:
+        io.kompose.network/kompose-default: "true"
+        io.kompose.service: api-gateway
+    spec:
+      containers:
+        - env:
+            - name: JWT_SECRET
+              value: ad07305c28789206693fb80b4f137c083ef0121925a484e8c3c2a5a1b78ca8bb
+            - name: KAFKA_BROKER
+              value: kafka:9092
+          image: us-central1-docker.pkg.dev/food-delivery-system-458116/my-repo/api-gateway:latest
+          name: api-gateway
+          ports:
+            - containerPort: 3000
+              protocol: TCP
+      restartPolicy: Always
