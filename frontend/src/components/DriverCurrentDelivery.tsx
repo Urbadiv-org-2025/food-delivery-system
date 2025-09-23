@@ -11,7 +11,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { io } from "socket.io-client";
 
 // double check the socket connection URL
-const socket = io("http://localhost:3004");
+const token = localStorage.getItem("token");
+const socket = io("http://localhost:3004", { auth: { token } });
 
 const DriverCurrentDelivery = () => {
   const { user } = useAuth();
