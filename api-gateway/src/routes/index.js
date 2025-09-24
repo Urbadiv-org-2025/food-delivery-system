@@ -4,9 +4,13 @@ const kafka = require("../config/kafka");
 const authenticate = require("../middleware/auth");
 const restrictTo = require("../middleware/restrict");
 const { restaurantUpload, menuUpload } = require("../middleware/upload");
+const google = require("../auth/google");
 
 const router = express.Router();
 const producer = kafka.producer();
+
+router.get("/auth/google/start", google.start);
+router.get("/auth/google/callback", google.callback);
 
 router.post("/users/register", async (req, res) => {
   try {

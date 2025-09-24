@@ -4,6 +4,49 @@ const kafka = require('../config/kafka');
 const User = require('../models/User');
 const connectDB = require('../config/db');
 
+const oauthLogin = async (req, res) => {
+  try {
+    const { provider, providerId, email, name, avatar, emailVerified } = req.body;
+    if (!provider || !providerId || !email) {
+      return res.status(400).json({ error: 'Missing provider/providerId/email' });
+    }
+
+    // Upsert by email; link provider
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = new User({
+        email,
+        role: 'customer',
+        oauth: { provider, providerId, emailVerified: !!emailVerified, avatar },
+      });
+      await user.save();
+    } else {
+      user.oauth = user.oauth || {};
+      user.oauth.provider = provider;
+      user.oauth.providerId = providerId;
+      user.oauth.emailVerified = !!emailVerified;
+      user.oauth.avatar = avatar || user.oauth.avatar;
+      await user.save();
+    }
+
+    // Issue the SAME app JWT shape your login uses
+    if (!process.env.JWT_SECRET) throw new Error('JWT secret not configured');
+    const token = jwt.sign(
+      { id: user.id || user._id.toString(), email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h', issuer: process.env.JWT_ISSUER || 'foodie-pal', audience: process.env.JWT_AUDIENCE || 'foodie-pal-web' }
+    );
+
+    const safeUser = user.toObject();
+    delete safeUser.password;
+
+    return res.json({ user: safeUser, token });
+  } catch (e) {
+    console.error('oauthLogin error', e);
+    return res.status(500).json({ error: 'OAuth login failed' });
+  }
+};
+
 
 connectDB();
 
@@ -101,4 +144,4 @@ const adminApprove = async (req, res) => {
   }
 };
 
-module.exports = { runConsumer, login, getUser, getAllUsers, deleteUser, editUser , adminApprove};
+module.exports = { runConsumer, login, getUser, getAllUsers, deleteUser, editUser , adminApprove, oauthLogin};

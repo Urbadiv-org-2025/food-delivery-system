@@ -29,6 +29,7 @@ import RestaurantOrders from "./pages/RestaurantOrders";
 import { CartProvider } from "./context/CartContext";
 import CartPage from "./pages/CartPage";
 import HistoryPage from "@/components/HistoryPage";
+import OAuthCallback from "./pages/OAuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
         <BrowserRouter>
           <ScrollToTop />
           <Routes>
+            <Route path="/oauth/callback" element={<OAuthCallback />} />
             <Route path="/" element={<LandingPage />} />
             <Route path="/app" element={<Index />} />
             <Route path="/login" element={<Navigate to="/" replace />} />

@@ -12,6 +12,11 @@ export const LoginForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const startGoogle = () => {
+    const redirect = encodeURIComponent('http://localhost:8080/oauth/callback');
+    window.location.href = `http://localhost:3000/api/auth/google/start?redirect=${redirect}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -55,6 +60,10 @@ export const LoginForm = () => {
         />
         <Button type="submit" className="w-full bg-[#FF4B3E] hover:bg-[#FF6B5E]">
           Login
+        </Button>
+        <div className="text-center text-sm text-muted-foreground">or</div>
+        <Button type="button" variant="outline" className="w-full" onClick={startGoogle}>
+          Continue with Google
         </Button>
       </div>
     </form>
